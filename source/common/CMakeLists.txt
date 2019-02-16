@@ -1,5 +1,5 @@
 set(H_LIST
-	common/defaults.h common/timestamp.h 
+	common/defaults.h common/timestamp.h common/utils.h
 )
 set(CPP_LIST
 	common/timestamp.cpp
