@@ -3,11 +3,21 @@
 #include <stdint.h>
 #include <iostream>
 
-namespace common {
+namespace common{
+	/*!
+	* Time in units defined in defaults.h stored as int.
+	*/
 	using TimeUnit = uint32_t;
+
+	/*!
+	* Number of TimeUnit steps.
+	*/
 	using TickCount = uint32_t;
 
-	struct TimeStamp {
+	/*!
+	* Time duration expressing the difference between two moments.
+	*/
+	struct TimeStamp{
 		const TimeUnit step;
 		const TickCount count;
 
