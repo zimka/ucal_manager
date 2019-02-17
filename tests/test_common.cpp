@@ -1,6 +1,7 @@
 #include <catch2/catch.hpp>
 #include <sstream>
 #include "common/timestamp.h"
+#include "common/keys.h"
 using namespace common;
 
 
@@ -54,5 +55,20 @@ TEST_CASE("TimeStamp") {
 		REQUIRE(ts.value() == TimeUnit(100));
 		REQUIRE(ts.repr() == desired_repr);
 		REQUIRE(ss.str() == desired_repr);
+	}
+}
+TEST_CASE("Keys"){
+	SECTION("SignalKey"){
+		std::string source = "Uhtr";
+		// NOTE: can't be cast from std::string directly
+		SignalKey k1 = SignalKey::_from_string(source.c_str());
+		SignalKey k2 = SignalKey::Uhtr;
+		SignalKey k3 = SignalKey::Umod;
+		REQUIRE(k1 == k2);
+		//NOTE: must be compared with +Key::Value, not Key::Value
+		REQUIRE(k1 == +SignalKey::Uhtr);
+		REQUIRE(k1 != k3);
+		REQUIRE(k1._to_string() == source);
+		REQUIRE(k1._to_string() == k2._to_string());
 	}
 }
