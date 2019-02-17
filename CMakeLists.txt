@@ -8,4 +8,4 @@ add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} PUBLIC common)
 
 add_subdirectory(tests)
-add_test(NAME run_tests COMMAND run_tests)
+enable_testing()
