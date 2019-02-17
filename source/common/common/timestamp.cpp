@@ -1,12 +1,11 @@
 #include "timestamp.h"
 #include "utils.h"
+#include "exceptions.h"
 using namespace common;
 
 double getRtlRatio(const TimeStamp& lts, const TimeStamp& rts){
-	// TODO: throw exception
 	if ((lts.step == 0) || (lts.count == 0))
-		return -1;
-
+		throw AssertionError("common::getRtlRatio got zero lts");
 	double steps_ratio = double(rts.step) / lts.step;
 	double counts_ratio = double(rts.count) / lts.count;
 	return steps_ratio * counts_ratio;
