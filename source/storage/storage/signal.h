@@ -33,6 +33,7 @@ namespace storage{
 
 		~SignalData() = default;
 		using Array = std::vector<SignalValue>;
+
 	private:
 		std::unique_ptr<Array> data_;
 		void swap(SignalData& other);

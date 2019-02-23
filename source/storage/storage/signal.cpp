@@ -104,7 +104,7 @@ SignalValue SignalData::operator[](size_t pos){
         throw common::ValueError(
             "SignalData length" + std::to_string(this->size()) + " is less than position" + std::to_string(pos)
         );
-	return 0.;
+	return (*data_)[pos];
 }
 
 void SignalData::swap(SignalData& other){
