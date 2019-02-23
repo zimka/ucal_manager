@@ -37,6 +37,16 @@ namespace common{
 	    
 	};
 
+	/*!
+	* Wrong input error
+	*/
+	class ValueError: public UcalManagerException{
+		public:
+	    explicit ValueError(const std::string& message):
+	    	UcalManagerException("ValueError: " + message){};
+	    
+	};
+
 	class NotImplementedError: public UcalManagerException{
 	public:
 	    explicit NotImplementedError(const std::string& s):

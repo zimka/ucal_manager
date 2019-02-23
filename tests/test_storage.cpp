@@ -7,8 +7,8 @@ using namespace storage;
 
 TEST_CASE("Signal") {
 	const int len = 10;
-	float values[len] = { 1. };
-	std::string valid_repr = "[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]";
+	SignalValue values[len] = {1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0};
+	std::string valid_repr = "[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]";
 		
 	SECTION("Creation"){
 		SignalData s0;
@@ -54,6 +54,7 @@ TEST_CASE("Signal") {
 		REQUIRE(s1.size() == 0);
 		ss >> s1;
 		REQUIRE(s1.size() == len);
+		ss.str("");
 		ss << s1;
 		REQUIRE(ss.str() == valid_repr);
 		REQUIRE(s1.repr() == valid_repr);

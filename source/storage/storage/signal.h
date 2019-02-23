@@ -17,7 +17,7 @@ namespace storage{
 	class SignalData{
 	public:
 		SignalData();
-		SignalData(SignalValue* start, size_t len);
+		SignalData(SignalValue* start, size_t len, size_t step=1);
 		SignalData(SignalData const& other);
 		SignalData(SignalData&& other) noexcept;
 
@@ -29,11 +29,11 @@ namespace storage{
 		SignalValue operator[](const size_t pos);
 
 		SignalData detachBack(size_t len);
-		void attachBack(SignalData& other);
+		void attachBack(SignalData const& other);
 
 		~SignalData() = default;
-	private:
 		using Array = std::vector<SignalValue>;
+	private:
 		std::unique_ptr<Array> data_;
 		void swap(SignalData& other);
 	};
