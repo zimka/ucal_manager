@@ -1,7 +1,10 @@
 #include <utility>
 #include <sstream>
 #include <catch2/catch.hpp>
+#include "common/timestamp.h"
 #include "storage/signal.h"
+#include "storage/frame.h"
+#include "utils.h"
 using namespace storage;
 
 
@@ -95,5 +98,107 @@ TEST_CASE("Signal") {
 
 		REQUIRE(s3[0] == 1.);
 		REQUIRE(s3[part_len - 1] == 2.);
+	}
+}
+
+TEST_CASE("Frame"){
+	common::TimeStamp ts0(0, 0);
+	common::TimeStamp ts1(10, 10);
+	common::TimeStamp ts2(10, 20);
+	
+	const int len = 5;
+	SignalValue values[len] = {1., 2., 3., 4., 5.};
+	SignalValue values2[len] = {42., 42., 42., 42., 42.};
+	SignalValue values3[len + 1] = {42., 42., 42., 42., 42., 42.};
+
+	SignalData sd(values, len);
+	SignalData sd2(values2, len);
+	SignalData sd3(values3, len);
+
+	common::SignalKey k1 = common::SignalKey::Uhtr;
+	common::SignalKey k2 = common::SignalKey::Umod;
+	SECTION("Creation"){
+		Frame f1(ts1);
+		REQUIRE(f1.getTs() == ts1);
+		REQUIRE(f1.size() == 0);
+	}
+	SECTION("Subscription"){
+		Frame f1(ts1);
+		f1[k1] = sd;
+		REQUIRE(f1.size() == sd.size());
+		SignalData v = f1[k1];
+		REQUIRE(isEqual(v, sd));
+		SignalData const& lv = f1[k1];
+		REQUIRE(isEqual(v, lv));
+		REQUIRE_THROWS(v = f1[k2]);
+		SignalData sd_half = sd.detachBack(len/2);
+		//size mismatch
+		REQUIRE_THROWS(f1[k2] = sd_half);
+	}
+	SECTION("Keys interface"){
+		Frame f1(ts1);
+		REQUIRE(f1.keys().size() == 0);
+		f1[k1] = sd;		
+		REQUIRE(f1.hasKey(k1));
+		REQUIRE_FALSE(f1.hasKey(k2));
+		REQUIRE(f1.keys().size() == 1);
+		REQUIRE(f1.keys()[0] == k1);
+		REQUIRE(isEqual(f1[k1], sd));
+
+		f1[k1] = sd2;
+		REQUIRE(isEqual(f1[k1], sd2));
+		REQUIRE_THROWS(f1[k2] = sd3);
+
+		bool deleted = f1.delKey(k2);
+		REQUIRE_FALSE(deleted);
+		deleted = f1.delKey(k1);
+		REQUIRE(deleted);
+		REQUIRE(f1.size() == 0);
+		REQUIRE(f1.keys().size() == 0);
+		f1[k2] = SignalData(values3, len+1);
+		REQUIRE(f1.size() == (len + 1));
+	}
+	SECTION("Movement"){
+		Frame f1(ts1);
+		f1[k1] = sd;
+		Frame f2(std::move(f1));
+		REQUIRE(f1.getTs() == ts0);
+		REQUIRE(f2.getTs() == ts1);
+		REQUIRE(f1.size() == 0);
+		REQUIRE(f2.size() == sd.size());
+		REQUIRE_FALSE(f1.hasKey(k1));
+		REQUIRE(f2.hasKey(k1));
+	}
+	SECTION("Attachment"){
+		Frame f1(ts1);
+		Frame f2(ts1);
+		Frame f3(ts2);
+		f1[k1] = sd;
+		f2[k1] = sd;
+
+		//attached ts must be higher than origin ts
+		REQUIRE_FALSE(f1.attachBack(f2)); 
+		//frame keys must be the same
+		REQUIRE_FALSE(f1.attachBack(f3)); 
+		REQUIRE(f1.size() == sd.size());
+		f3[k1] = sd;
+		REQUIRE(f1.attachBack(f3)); 
+		REQUIRE(f1.size() == 2 * sd.size());
+		f3[k2] = sd;
+		REQUIRE_FALSE(f1.attachBack(f3)); 
+	}
+	SECTION("Detachment"){
+		Frame f1(ts1);
+		REQUIRE_THROWS(f1.detachBack(1));
+		f1[k1] = sd;
+		Frame f2 = f1.detachBack(1);
+		REQUIRE(f2.size() == 1);
+		REQUIRE(f2.keys() == f1.keys());
+		REQUIRE(f1.size() == (len - 1));
+		REQUIRE(f2.getTs() > f1.getTs());
+		Frame f3 = f1.detachBack(0);
+		REQUIRE(f3.size() == 0);
+		REQUIRE(f1.keys() == f3.keys());
+		REQUIRE(f1.size() == (len - 1));
 	}
 }

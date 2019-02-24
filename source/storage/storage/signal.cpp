@@ -99,7 +99,7 @@ std::istream& storage::operator>>(std::istream& is, SignalData& sd){
     return is;
 }
 
-SignalValue SignalData::operator[](size_t pos){
+SignalValue SignalData::operator[](size_t pos) const{
     if (pos >= this->size())
         throw common::ValueError(
             "SignalData length" + std::to_string(this->size()) + " is less than position" + std::to_string(pos)

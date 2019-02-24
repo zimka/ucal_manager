@@ -1,8 +1,10 @@
 set(H_LIST
-	storage/signal.h 
+	storage/signal.h
+	storage/frame.h	
 )
 set(CPP_LIST
 	storage/signal.cpp
+	storage/frame.cpp
 )
 add_library(storage ${H_LIST} ${CPP_LIST})
 target_link_libraries(storage PUBLIC common)

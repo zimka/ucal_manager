@@ -6,6 +6,6 @@ namespace common{
 	/*!
 	* Key to label signal read from device.
 	*/
-	BETTER_ENUM(SignalKey, char, Uref, Umod, Utpl, Uhtr, Uaux);
+	BETTER_ENUM(SignalKey, char, Uref, Umod, Utpl, Uhtr, Uaux, Default);
 }
 #endif //UCAL2_COMMON_KEYS_H

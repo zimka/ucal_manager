@@ -26,7 +26,7 @@ namespace storage{
 
 		size_t size() const;
 		std::string repr() const;
-		SignalValue operator[](const size_t pos);
+		SignalValue operator[](const size_t pos) const;
 
 		SignalData detachBack(size_t len);
 		void attachBack(SignalData const& other);
