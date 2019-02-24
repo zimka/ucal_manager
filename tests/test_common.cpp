@@ -56,6 +56,19 @@ TEST_CASE("TimeStamp") {
 		REQUIRE(ts.repr() == desired_repr);
 		REQUIRE(ss.str() == desired_repr);
 	}
+	SECTION("Copy"){
+		TimeStamp ts1(10, 10);
+		TimeStamp ts2(ts1);
+		REQUIRE(ts1.step == ts2.step);
+		REQUIRE(ts1.count == ts2.count);
+	}
+	SECTION("Assignment"){
+		TimeStamp ts1(10, 10);
+		TimeStamp ts2(30, 30);
+		ts1 = ts2;
+		REQUIRE(ts1.step == ts2.step);
+		REQUIRE(ts1.count == ts2.count);
+	}
 }
 TEST_CASE("Keys"){
 	SECTION("SignalKey"){

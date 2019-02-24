@@ -18,11 +18,11 @@ namespace common{
 	* Time duration expressing the difference between two moments.
 	*/
 	struct TimeStamp{
-		const TimeUnit step;
-		const TickCount count;
+		TimeUnit step;
+		TickCount count;
 
 		TimeStamp(TimeUnit step, TickCount count);
-		
+
 		TimeUnit value() const;
 		std::string repr() const;
 
