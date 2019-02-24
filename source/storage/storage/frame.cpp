@@ -1,16 +1,31 @@
 #include "frame.h"
+#include "common/exceptions.h"
+
 using namespace storage;
 
 Frame::Frame(common::TimeStamp ts):ts_(ts){};
+Frame::Frame(Frame&& other) noexcept:Frame(){
+	std::swap(other.data_, data_);
+	std::swap(other.size_, size_);
+	std::swap(other.ts_, ts_);
+};
 
 Frame::KeyArray Frame::keys() const{
-	return KeyArray();
+	KeyArray keys;
+	for(auto it = data_.begin(); it != data_.end(); ++it)
+  		keys.push_back(common::SignalKey::_from_string(it->first.c_str()));
+	return keys;
 }
 bool Frame::hasKey(common::SignalKey key) const{
-	return false;
+	return data_.count(key._to_string());
 }
 bool Frame::delKey(common::SignalKey key){
-	return false;
+	if (!hasKey(key))
+		return false;
+	data_.erase(key._to_string());
+	if (!keys().size())
+		size_ = 0;
+	return true;
 }
 
 common::TimeStamp Frame::getTs() const{
@@ -20,24 +35,65 @@ size_t Frame::size() const{
 	return size_;
 }
 
-
 Frame Frame::detachBack(size_t len){
-	return Frame(ts_);
+	if (len > size()){
+		std::string message = "Frame size " + std::to_string(size());
+		message += " is less than requested detachBack len: " + std::to_string(len);
+		throw common::ValueError(message);
+	}
+	Frame f(computeDetachedTs(len));
+	for (auto k: keys()){
+		f[k] = data_[k._to_string()].detachBack(len);
+	}
+	size_ = size() - len;
+	return f;
 };
-bool Frame::attachBack(Frame const& other){
-	return false;
+bool Frame::attachBack(Frame& other){
+	if (other.keys() != keys())
+		return false;
+	if (!(other.getTs() > ts_))
+		return false;
+	for (auto k: keys()){
+		data_[k._to_string()].attachBack(other[k]);
+	}
+	size_ = size() + other.size();
+	return true;
+}
+common::TimeStamp Frame::computeDetachedTs(size_t len) const{
+	return common::TimeStamp(ts_.step, ts_.count + size() - len);
 }
 
-Frame::SignalDataProxy::SignalDataProxy(Frame::SignalKeyValue& source, common::SignalKey key):source_(source), key_(key){}
+Frame::SignalDataProxy::SignalDataProxy(
+	Frame::SignalKeyValue& source, size_t& size, common::SignalKey key
+	):source_(source), size_(size), key_(key){}
 Frame::SignalDataProxy Frame::operator[] (const common::SignalKey key){
-	return Frame::SignalDataProxy(data_, key);
+	return Frame::SignalDataProxy(data_, size_,  key);
 }
-Frame::SignalDataProxy& Frame::SignalDataProxy::operator=(SignalData const& sd){
-	return *this;
+
+void validateSizes(size_t size_frame, size_t size_sd){
+	if ((size_frame) && (size_frame != size_sd)){
+		std::string message = "Can't assign SignalData with size " + std::to_string(size_sd);
+		message += "to Frame with size "+ std::to_string(size_frame);
+		throw common::ValueError(message);
+	}
 }
 Frame::SignalDataProxy& Frame::SignalDataProxy::operator=(SignalData&& sd){
+	validateSizes(size_, sd.size());
+	size_ = sd.size();
+	source_[key_._to_string()] = std::move(sd);
+	return *this;
+}
+Frame::SignalDataProxy& Frame::SignalDataProxy::operator=(SignalData const& sd){
+	validateSizes(size_, sd.size());
+	size_ = sd.size();
+	source_[key_._to_string()] = SignalData(sd);
 	return *this;
 }
 Frame::SignalDataProxy::operator SignalData&(){
-	return stub;
+	if (!source_.count(key_._to_string())){
+		std::string message = "No value in Frame with key ";
+		message += key_._to_string();
+		throw common::ValueError( message);
+	}
+	return source_[key_._to_string()];
 }

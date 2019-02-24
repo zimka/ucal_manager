@@ -10,8 +10,9 @@ namespace storage{
 	public:
 		using KeyArray = std::vector<common::SignalKey>;
 		using SignalKeyValue = std::unordered_map<std::string, SignalData>;
-		Frame(common::TimeStamp ts=common::TimeStamp(0,0));
-		Frame(Frame&& other) = default;
+		Frame() = default;
+		Frame(common::TimeStamp ts);
+		Frame(Frame&& other) noexcept;
 		Frame(Frame const& other) = delete;
 
 		KeyArray keys() const;
@@ -22,13 +23,16 @@ namespace storage{
 		size_t size() const;
 
 		Frame detachBack(size_t len);
-		bool attachBack(Frame const& other);		
+		// TODO: Frame const& would be better, but
+		// cant use it because of non-const operator[]
+		bool attachBack(Frame& other);
 
 		class SignalDataProxy{
 		public:
 			SignalDataProxy() = delete;
 			SignalDataProxy(
 				SignalKeyValue& source, 
+				size_t& size,
 				common::SignalKey key=common::SignalKey::Default
 			);
 	        operator SignalData&();
@@ -37,14 +41,15 @@ namespace storage{
 			SignalDataProxy& operator=(SignalData && sd);
 		private:
 			SignalKeyValue& source_;
+			size_t& size_;
 			common::SignalKey key_;
 		};
 		SignalDataProxy operator[](const common::SignalKey key);
 	private:
 		SignalKeyValue data_;
-		const common::TimeStamp ts_;
+		common::TimeStamp ts_=common::TimeStamp(0,0);
 		size_t size_ = 0;
-		SignalData stub;
+		common::TimeStamp computeDetachedTs(size_t len) const;
 	};
 }
 #endif //UCAL2_STORAGE_FRAME_H

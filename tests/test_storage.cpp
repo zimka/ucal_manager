@@ -113,7 +113,7 @@ TEST_CASE("Frame"){
 
 	SignalData sd(values, len);
 	SignalData sd2(values2, len);
-	SignalData sd3(values3, len);
+	SignalData sd3(values3, len + 1);
 
 	common::SignalKey k1 = common::SignalKey::Uhtr;
 	common::SignalKey k2 = common::SignalKey::Umod;
@@ -147,6 +147,7 @@ TEST_CASE("Frame"){
 
 		f1[k1] = sd2;
 		REQUIRE(isEqual(f1[k1], sd2));
+		REQUIRE(sd2.size() != sd3.size());
 		REQUIRE_THROWS(f1[k2] = sd3);
 
 		bool deleted = f1.delKey(k2);
