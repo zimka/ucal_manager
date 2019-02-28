@@ -69,6 +69,9 @@ Frame::SignalDataProxy::SignalDataProxy(
 Frame::SignalDataProxy Frame::operator[] (const common::SignalKey key){
 	return Frame::SignalDataProxy(data_, size_,  key);
 }
+SignalData const& Frame::operator[] (const common::SignalKey key) const{
+	return data_.at(key._to_string());
+}
 
 void validateSizes(size_t size_frame, size_t size_sd){
 	if ((size_frame) && (size_frame != size_sd)){
@@ -96,4 +99,24 @@ Frame::SignalDataProxy::operator SignalData&(){
 		throw common::ValueError( message);
 	}
 	return source_[key_._to_string()];
+}
+
+
+void storage::to_json(json& j, const Frame& f){
+	j = json();
+	// TODO: very unefficient implementation, 
+	// because SignalData is dumped then parsed. 
+	// Should be changed, if ever really used for serialization
+	for (auto k: f.keys()){
+		SignalData const& v = f[k];
+		j[k._to_string()] = json::parse(v.repr());
+	}
+}
+std::string Frame::repr() const{
+	json j = *this;
+	return j.dump();
+}
+std::ostream& storage::operator<<(std::ostream& os, const Frame& f){
+    os << f.repr();
+    return os;
 }

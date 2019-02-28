@@ -5,6 +5,8 @@
 #include "storage/signal.h"
 #include "storage/frame.h"
 #include "utils.h"
+#include "single_header/json.hpp"
+using nlohmann::json;
 using namespace storage;
 
 
@@ -158,6 +160,10 @@ TEST_CASE("Frame"){
 		REQUIRE(f1.keys().size() == 0);
 		f1[k2] = SignalData(values3, len+1);
 		REQUIRE(f1.size() == (len + 1));
+		Frame const& fref = f1;
+		REQUIRE(fref[k2].size() == len + 1);
+		//no such key
+		REQUIRE_THROWS(fref[k1].size());
 	}
 	SECTION("Movement"){
 		Frame f1(ts1);
@@ -201,5 +207,17 @@ TEST_CASE("Frame"){
 		REQUIRE(f3.size() == 0);
 		REQUIRE(f1.keys() == f3.keys());
 		REQUIRE(f1.size() == (len - 1));
+	}
+	SECTION("Representation"){
+		Frame f1(ts1);
+		f1[k1] = sd;
+		f1[k2] = sd2;
+		std::string valid_repr = "{\"Uhtr\":[1.0,2.0,3.0,4.0,5.0],\"Umod\":[42.0,42.0,42.0,42.0,42.0]}";
+		REQUIRE(f1.repr() == valid_repr);
+		std::stringstream ss;
+		ss << f1;
+		REQUIRE(ss.str() == valid_repr);
+		json j = f1;
+		REQUIRE(j.size() == 2);
 	}
 }
