@@ -1,11 +1,14 @@
 #include <utility>
 #include <sstream>
 #include <catch2/catch.hpp>
+#include "single_header/json.hpp"
+
+#include "utils.h"
 #include "common/timestamp.h"
 #include "storage/signal.h"
 #include "storage/frame.h"
-#include "utils.h"
-#include "single_header/json.hpp"
+#include "storage/storage.h"
+
 using nlohmann::json;
 using namespace storage;
 
@@ -107,6 +110,7 @@ TEST_CASE("Frame"){
 	common::TimeStamp ts0(0, 0);
 	common::TimeStamp ts1(10, 10);
 	common::TimeStamp ts2(10, 20);
+	common::TimeStamp ts3(10, 30);
 	
 	const int len = 5;
 	SignalValue values[len] = {1., 2., 3., 4., 5.};
@@ -177,13 +181,13 @@ TEST_CASE("Frame"){
 		REQUIRE(f2.hasKey(k1));
 	}
 	SECTION("Attachment"){
-		Frame f1(ts1);
+		Frame f1(ts2);
 		Frame f2(ts1);
 		Frame f3(ts2);
 		f1[k1] = sd;
 		f2[k1] = sd;
 
-		//attached ts must be higher than origin ts
+		//attached ts must be equals or higher than origin ts
 		REQUIRE_FALSE(f1.attachBack(f2)); 
 		//frame keys must be the same
 		REQUIRE_FALSE(f1.attachBack(f3)); 
@@ -193,6 +197,10 @@ TEST_CASE("Frame"){
 		REQUIRE(f1.size() == 2 * sd.size());
 		f3[k2] = sd;
 		REQUIRE_FALSE(f1.attachBack(f3)); 
+		REQUIRE(f1.attachBack(f2, true));
+		f2.setTs(ts3);
+		REQUIRE(f1.attachBack(f2));
+		REQUIRE(f1.size() == 4* sd.size());
 	}
 	SECTION("Detachment"){
 		Frame f1(ts1);

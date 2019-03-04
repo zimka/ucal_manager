@@ -26,13 +26,14 @@ namespace storage{
 		bool delKey(common::SignalKey key);
 
 		common::TimeStamp getTs() const;
+		void setTs(common::TimeStamp ts);
 		size_t size() const;
 		std::string repr() const;
 
 		Frame detachBack(size_t len);
 		// TODO: Frame const& would be better, but
 		// cant use it because of non-const operator[]
-		bool attachBack(Frame& other);
+		bool attachBack(Frame& other, bool enforce_ts=false);
 
 		class SignalDataProxy{
 		public:

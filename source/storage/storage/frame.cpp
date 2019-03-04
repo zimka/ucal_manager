@@ -31,6 +31,10 @@ bool Frame::delKey(common::SignalKey key){
 common::TimeStamp Frame::getTs() const{
 	return ts_;
 }
+void Frame::setTs(common::TimeStamp ts){
+	ts_ = ts;
+}
+
 size_t Frame::size() const{
 	return size_;
 }
@@ -48,10 +52,10 @@ Frame Frame::detachBack(size_t len){
 	size_ = size() - len;
 	return f;
 };
-bool Frame::attachBack(Frame& other){
+bool Frame::attachBack(Frame& other, bool enforce_ts){
 	if (other.keys() != keys())
 		return false;
-	if (!(other.getTs() > ts_))
+	if ((!enforce_ts) && (other.getTs() < ts_))
 		return false;
 	for (auto k: keys()){
 		data_[k._to_string()].attachBack(other[k]);
