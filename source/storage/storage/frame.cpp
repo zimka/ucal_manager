@@ -53,11 +53,14 @@ Frame Frame::detachBack(size_t len){
 	return f;
 };
 bool Frame::attachBack(Frame& other, bool enforce_ts){
-	if (other.keys() != keys())
+	if (keys().size() && (other.keys() != keys()))
 		return false;
 	if ((!enforce_ts) && (other.getTs() < ts_))
 		return false;
-	for (auto k: keys()){
+	auto current_keys = keys();
+	if (!current_keys.size())
+		current_keys = other.keys();
+	for (auto k: current_keys){
 		data_[k._to_string()].attachBack(other[k]);
 	}
 	size_ = size() + other.size();

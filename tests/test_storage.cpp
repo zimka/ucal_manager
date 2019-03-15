@@ -12,7 +12,6 @@
 using nlohmann::json;
 using namespace storage;
 
-
 TEST_CASE("Signal") {
 	const int len = 10;
 	SignalValue values[len] = {1.0,2.0,1.0,2.0,1.0,2.0,1.0,2.0,1.0,2.0};
@@ -34,13 +33,13 @@ TEST_CASE("Signal") {
 		REQUIRE(s2.size() == len);
 		REQUIRE(s1.size() == 0);
 
-		SignalData s4(values, len/2, 2);
-		REQUIRE(s4.size() == len/2);
+		SignalData s4(values, len / 2, 2);
+		REQUIRE(s4.size() == len / 2);
 		REQUIRE(s4[0] == 1.);
 		REQUIRE(s4[1] == 1.);
 
-		SignalData s5(values + 1, len/2, 2);
-		REQUIRE(s5.size() == len/2);
+		SignalData s5(values + 1, len / 2, 2);
+		REQUIRE(s5.size() == len / 2);
 		REQUIRE(s5[0] == 2.);
 		REQUIRE(s5[1] == 2.);
 
@@ -89,7 +88,7 @@ TEST_CASE("Signal") {
 		REQUIRE(s0.size() == (len - part_len));
 		SignalData s2(s1);
 		s2.attachBack(s1);
-		REQUIRE(s2.size() == 2*part_len);
+		REQUIRE(s2.size() == 2 * part_len);
 		REQUIRE(s1.size() == part_len);
 
 		SignalData s3 = s1.detachBack(part_len);
@@ -137,7 +136,7 @@ TEST_CASE("Frame"){
 		SignalData const& lv = f1[k1];
 		REQUIRE(isEqual(v, lv));
 		REQUIRE_THROWS(v = f1[k2]);
-		SignalData sd_half = sd.detachBack(len/2);
+		SignalData sd_half = sd.detachBack(len / 2);
 		//size mismatch
 		REQUIRE_THROWS(f1[k2] = sd_half);
 	}
@@ -162,7 +161,7 @@ TEST_CASE("Frame"){
 		REQUIRE(deleted);
 		REQUIRE(f1.size() == 0);
 		REQUIRE(f1.keys().size() == 0);
-		f1[k2] = SignalData(values3, len+1);
+		f1[k2] = SignalData(values3, len + 1);
 		REQUIRE(f1.size() == (len + 1));
 		Frame const& fref = f1;
 		REQUIRE(fref[k2].size() == len + 1);
@@ -200,7 +199,7 @@ TEST_CASE("Frame"){
 		REQUIRE(f1.attachBack(f2, true));
 		f2.setTs(ts3);
 		REQUIRE(f1.attachBack(f2));
-		REQUIRE(f1.size() == 4* sd.size());
+		REQUIRE(f1.size() == 4 * sd.size());
 	}
 	SECTION("Detachment"){
 		Frame f1(ts1);
@@ -227,5 +226,116 @@ TEST_CASE("Frame"){
 		REQUIRE(ss.str() == valid_repr);
 		json j = f1;
 		REQUIRE(j.size() == 2);
+	}
+}
+
+Frame buildTestFrame(common::TimeStamp ts, int len){
+	common::SignalKey k1 = common::SignalKey::Uhtr;
+	std::vector<SignalValue> values;
+	for (size_t i=0; i<len; ++i)
+		values.push_back(1);
+	SignalData sd(&*values.begin(), len);
+	Frame f(ts);
+	f[k1] = sd;
+	return std::move(f);
+}
+
+TEST_CASE("Storage"){
+	const int len = 5;
+	common::TimeStamp ts1(10, 10);
+	common::TimeStamp ts2(10, 15);
+	common::TimeStamp ts3(10, 25);
+
+	SECTION("Creation"){
+		Storage st(len);
+		REQUIRE(st.getFrameSize() == len);
+		REQUIRE(st.empty());
+		REQUIRE(st.size() == 0);
+		std::string hash = st.getHash();
+		REQUIRE(st.getHash() == hash);
+	}
+	SECTION("Append"){
+		Frame f1 = buildTestFrame(ts1, len);
+		Frame f2 = buildTestFrame(ts2, len);
+		Frame f3 = buildTestFrame(ts3, 2 * len);
+		Frame f4 = buildTestFrame(ts1, 2 * len);
+
+		//Storage where frame must be TimeStamp sorted to append
+		Storage st(2 * len, false);
+
+		bool status = false;
+		// appended in head
+		status = st.append(std::move(f1));
+		REQUIRE(status);
+		REQUIRE(st.size() == 0);
+		status = st.append(std::move(f2));
+		REQUIRE(status);
+		REQUIRE(st.size() == 1);
+		status = st.append(std::move(f3));
+		REQUIRE(status);
+		REQUIRE(st.size() == 2);
+		status = st.append(std::move(f4));
+		REQUIRE_FALSE(status);
+		REQUIRE(f4.size());
+		REQUIRE(st.size() == 2);
+
+		Storage st1(len);
+		status = st1.append(std::move(f4));
+		REQUIRE(status);
+		REQUIRE(st1.size() == 2);
+	}
+	SECTION("Subscript"){
+		size_t num = 2;
+		common::TimeStamp ts_l0(10, 0);
+		common::TimeStamp ts_l1(10, (num - 1) * len);
+		Frame f1 = buildTestFrame(ts_l0, num * len + 1);
+		Storage st(len);
+		st.append(std::move(f1));
+		REQUIRE(st.size() == 2);
+		REQUIRE(st[0].size() == len);
+		REQUIRE(st[num - 1].size() == len);
+		REQUIRE(st[num - 1].getTs() == ts_l1);
+	}
+	SECTION("Reset, finalize, hash"){
+		Storage st(2*len);
+		Frame f1 = buildTestFrame(ts1, 3*len);
+		st.append(std::move(f1));
+		REQUIRE(st.size() == 1);
+		std::string hash = st.getHash();
+		REQUIRE(st.getHash() == hash);
+		st.finalize();
+		REQUIRE(st.size() == 2);
+		st.finalize();
+		Frame f2 = buildTestFrame(ts1, len);
+		REQUIRE(st.size() == 2);
+		st.append(std::move(f2));		
+		REQUIRE(st.size() == 2);
+		REQUIRE(st.getHash() == hash);
+		st.reset();
+		REQUIRE(st.getHash() != hash);
+		REQUIRE(st.empty());
+		st.finalize();
+		REQUIRE(st.empty());
+	}
+	SECTION("Iteration"){
+		size_t num = 10;
+		common::TimeStamp ts_l0(10, 0);
+		// last frame has len*(num-1) ts, previous - len*(num - 2) 
+		common::TimeStamp ts_l1(10, len * (num - 2));
+	
+		Storage st(len);
+		Frame f1 = buildTestFrame(ts_l0, num * len);
+		st.append(std::move(f1));
+		REQUIRE(st.size() == num);
+		size_t counter = 0;
+		for (auto it=st.begin(); it!=st.end(); ++it){
+			counter++;
+		}
+		REQUIRE(counter == num);
+		counter = 0;
+		common::TimeStamp tt = st.afterTs(ts_l1)->getTs(); 
+		for (auto it=st.afterTs(ts_l1); it!=st.end(); ++it)
+			counter++;
+		REQUIRE(counter == 1);
 	}
 }
