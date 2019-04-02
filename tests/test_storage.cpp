@@ -3,14 +3,27 @@
 #include <catch2/catch.hpp>
 #include "single_header/json.hpp"
 
-#include "utils.h"
+#include "common/utils.h"
 #include "common/timestamp.h"
-#include "storage/signal.h"
+
 #include "storage/frame.h"
 #include "storage/storage.h"
+#include "storage/signal.h"
 
 using nlohmann::json;
 using namespace storage;
+
+
+bool isEqual(storage::SignalData const& sd1, storage::SignalData const& sd2){
+	if (sd1.size() != sd2.size())
+		return false;
+	bool same = true;
+	for (size_t i=0; i<sd1.size(); i++){
+		same = same && common::approxEqual(sd1[i], sd2[i]);
+	}
+	return same;
+}
+
 
 TEST_CASE("Signal") {
 	const int len = 10;

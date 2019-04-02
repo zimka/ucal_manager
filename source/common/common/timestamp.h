@@ -2,13 +2,10 @@
 #define UCAL2_COMMON_TIMESTAMP_H
 #include <stdint.h>
 #include <iostream>
+#include "units.h"
+
 
 namespace common{
-	/*!
-	* Time in units defined in defaults.h stored as int.
-	*/
-	using TimeUnit = uint32_t;
-
 	/*!
 	* Number of TimeUnit steps.
 	*/

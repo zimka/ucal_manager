@@ -41,7 +41,7 @@ namespace storage{
 			SignalDataProxy(
 				SignalKeyValue& source, 
 				size_t& size,
-				common::SignalKey key=common::SignalKey::Default
+				common::SignalKey key=common::SignalKey::Undefined
 			);
 	        operator SignalData&();
 	        SignalData stub;
