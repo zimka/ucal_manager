@@ -1,8 +1,8 @@
 set(H_LIST
-	device/timer.h
+	device/timer.h device/interface.h
 )
 set(CPP_LIST
-	device/timer.cpp
+	device/timer.cpp device/mock.cpp
 )
 add_library(device ${H_LIST} ${CPP_LIST})
 target_link_libraries(device PUBLIC common storage)

@@ -6,6 +6,7 @@
 #include "common/timestamp.h"
 #include "common/utils.h"
 #include "device/timer.h"
+#include "device/interface.h"
 
 using namespace device;
 using namespace common;
@@ -87,5 +88,28 @@ TEST_CASE("DeviceTimer"){
 		REQUIRE(timer.stop());
 		REQUIRE_FALSE(timer.isRunning());
 	}
+}
 
+TEST_CASE("MockDevice"){
+	SECTION("State machine"){
+		MockDevice device;
+		REQUIRE_FALSE(device.isRunning());
+		REQUIRE_FALSE(device.stop());
+		REQUIRE_FALSE(device.isRunning());
+		REQUIRE(device.run());
+		REQUIRE(device.isRunning());
+		REQUIRE(device.stop());
+		REQUIRE_FALSE(device.isRunning());
+	}
+	SECTION("Overdue"){
+		MockDevice device;
+		TimeUnit sleep_time(100);
+		device.setTimeout(sleep_time * 2);
+		device.run()
+		REQUIRE(device.isRunning());
+		testSleep(sleep_time);
+		REQUIRE(device.isRunning());
+		testSleep(sleep_time);
+		REQUIRE_FALSE(device.isRunning());
+	}
 }
