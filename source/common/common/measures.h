@@ -1,6 +1,7 @@
-#ifndef UCAL2_COMMON_DEFAULTS_H
-#define UCAL2_COMMON_DEFAULTS_H
+#ifndef UCAL2_COMMON_MEASURES_H
+#define UCAL2_COMMON_MEASURES_H
 #include <stdlib.h>
+ #include <stdint.h>
 
 namespace common{
 	/*!
@@ -20,5 +21,16 @@ namespace common{
 	* Acceptable absolute error for small double to be considered as equal.
 	*/
 	const float ACCURACY_ERROR = 1e-6;
+
+	//TODO: make magnitude of time changable by config
+	/*!
+	* Time in millisecond units
+	*/
+	using TimeUnit = uint32_t;
+
+	/*!
+	* Voltage in millivoltage units
+	*/
+	using VoltUnit = int32_t;
 }
-#endif//UCAL2_COMMON_DEFAULTS_H
+#endif//UCAL2_COMMON_MEASURES_H

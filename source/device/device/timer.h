@@ -1,7 +1,7 @@
 #ifndef UCAL2_DEVICE_TIMER_H
 #define UCAL2_DEVICE_TIMER_H
 #include <chrono>
-#include "common/units.h"
+#include "common/measures.h"
 #include "common/timestamp.h"
 
 namespace device{

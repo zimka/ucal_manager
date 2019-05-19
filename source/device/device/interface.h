@@ -1,6 +1,6 @@
 #ifndef UCAL2_DEVICE_INTERFACE_H
 #define UCAL2_DEVICE_INTERFACE_H
-#include "common/units.h"
+#include "common/measures.h"
 #include "common/keys.h"
 
 #include "storage/frame.h"
