@@ -7,6 +7,7 @@
 #include "common/utils.h"
 #include "device/timer.h"
 #include "device/interface.h"
+#include "storage/frame.h"
 
 using namespace device;
 using namespace common;
@@ -23,7 +24,6 @@ TEST_CASE("DeviceTimer"){
 
 	float sleep_ratio = 10;
 	auto sleep_duration = TimeUnit(td * sleep_ratio);
-
 
 	SECTION("Stopped"){
 		DeviceTimer timer(td);
@@ -104,12 +104,27 @@ TEST_CASE("MockDevice"){
 	SECTION("Overdue"){
 		MockDevice device;
 		TimeUnit sleep_time(100);
+		TimeUnit sleep_time_eps(5);
 		device.setTimeout(sleep_time * 2);
-		device.run()
+		device.run();
 		REQUIRE(device.isRunning());
 		testSleep(sleep_time);
 		REQUIRE(device.isRunning());
-		testSleep(sleep_time);
+		testSleep(sleep_time + sleep_time_eps);
 		REQUIRE_FALSE(device.isRunning());
+	}
+	SECTION("Get data"){
+		// Mock device step equals 1
+		MockDevice device;
+		size_t steps_num = 50; 
+		TimeUnit sleep_time(steps_num);
+		device.run();
+		testSleep(sleep_time);
+		storage::Frame f1 = device.getFrame();
+		REQUIRE(common::approxEqual(f1.size(), steps_num));
+
+		testSleep(sleep_time);
+		storage::Frame f2 = device.getFrame();
+		REQUIRE(common::approxEqual(f2.size(), steps_num));
 	}
 }

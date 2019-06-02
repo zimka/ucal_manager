@@ -5,6 +5,7 @@
 
 #include "storage/frame.h"
 #include "storage/signal.h"
+#include "timer.h"
 
 namespace device{
 	/*!
@@ -52,6 +53,11 @@ namespace device{
 	    virtual bool setTimeout(common::TimeUnit finish);
 		virtual common::DeviceId getId() const;
 	    virtual ~MockDevice() =default;
+    private:
+    	mutable bool is_running_=false;
+    	size_t points_returned_=0;
+    	DeviceTimer timer_;
+
     };
 }
 #endif//UCAL2_DEVICE_INTERFACE_H
