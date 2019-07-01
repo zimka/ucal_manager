@@ -2,6 +2,7 @@
 #include <sstream>
 #include "common/timestamp.h"
 #include "common/keys.h"
+#include "common/config.h"
 using namespace common;
 
 
@@ -83,5 +84,33 @@ TEST_CASE("Keys"){
 		REQUIRE(k1 != k3);
 		REQUIRE(k1._to_string() == source);
 		REQUIRE(k1._to_string() == k2._to_string());
+	}
+}
+
+TEST_CASE("Config"){
+	SECTION("Doubles"){
+		Config mock;
+		double value = 10.11;
+		REQUIRE_NOTHROW(mock.readDouble(ConfigDoubleKey::SamplingFreq));
+		CHECK(mock.write(ConfigDoubleKey::SamplingFreq, value));
+		REQUIRE(mock.readDouble(ConfigDoubleKey::SamplingFreq) == value);
+		REQUIRE_THROWS(mock.readDouble(ConfigDoubleKey::Undefined));
+	}
+
+	SECTION("Strings"){
+		Config mock;
+		std::string value = "WeirdId";
+		REQUIRE(mock.write(ConfigStringKey::BoardId, value));
+		REQUIRE(mock.readStr(ConfigStringKey::BoardId) == value);
+	}
+
+	SECTION("Defaults"){
+	    Config mock;
+	    double value = mock.readDouble(ConfigDoubleKey::SamplingFreq);
+	    double new_value = value + 1.1;
+	    mock.write(ConfigDoubleKey::SamplingFreq, new_value);
+		REQUIRE(mock.readDouble(ConfigDoubleKey::SamplingFreq) == new_value);
+		REQUIRE(mock.reset());
+		REQUIRE(mock.readDouble(ConfigDoubleKey::SamplingFreq) == value);
 	}
 }

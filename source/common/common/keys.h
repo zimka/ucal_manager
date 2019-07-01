@@ -17,5 +17,16 @@ namespace common{
 	* Key to identify AcquisitionDevice
 	*/
 	BETTER_ENUM(DeviceId, char, Daqboard, Mock, Undefined);
+
+
+	/*!
+	 * Key to indentify string config field
+	 */
+	BETTER_ENUM(ConfigStringKey, char, BoardId, Undefined);
+
+	/*!
+	 * Key to indentify double config field
+	 */
+	BETTER_ENUM(ConfigDoubleKey, char, SamplingFreq, Undefined);
 }
 #endif//UCAL2_COMMON_KEYS_H
