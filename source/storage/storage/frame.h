@@ -3,13 +3,14 @@
 #include "common/keys.h"
 #include "common/timestamp.h"
 #include "signal.h"
+#include "json/single_include/nlohmann/json.hpp"
+
 #include <unordered_map>
-#include "single_header/json.hpp"
 using nlohmann::json;
 
 namespace storage{
 	/*!
-	* Timestamped serializable key-value storage for signal data. 
+	* Timestamped serializable key-value storage for signal data.
 	* Stored signals must have the same size.
 	*/
 	class Frame{
@@ -39,7 +40,7 @@ namespace storage{
 		public:
 			SignalDataProxy() = delete;
 			SignalDataProxy(
-				SignalKeyValue& source, 
+				SignalKeyValue& source,
 				size_t& size,
 				common::SignalKey key=common::SignalKey::Undefined
 			);
