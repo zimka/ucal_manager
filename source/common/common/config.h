@@ -34,6 +34,9 @@ namespace common {
         //mutable std::fstream override; // Костыли!
         ConfigDataPtr data;
     };
+    using ConfigPtr = std::shared_ptr<Config>;
+
+    ConfigPtr acquireConfig();
 
 }
 

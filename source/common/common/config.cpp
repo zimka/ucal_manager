@@ -6,6 +6,7 @@
 #include <single_header/json.hpp>
 #include <iostream>
 #include <sstream>
+#include <atomic>
 #include "exceptions.h"
 
 using namespace common;
@@ -14,12 +15,23 @@ using nlohmann::json;
 static const char DEFAULT[] =
         R"({"BoardId": "DaqBoard2000", "SamplingFreq": 10.11})";
 
+//static std::shared_timed_mutex WRITE_GUARD;
+
+static std::atomic_bool IMMUTABLE(false);
+
 namespace common {
     struct ConfigData {
         json def;
         json over;
     };
+
+    ConfigPtr acquireConfig()
+    {
+        static ConfigPtr instance = std::make_shared<Config>();
+        return instance;
+    }
 }
+
 
 static void write_file(const char* filename, const json& data) {
     std::ofstream file(filename);
@@ -45,23 +57,41 @@ Config::~Config() {
 }
 
 bool Config::write(common::ConfigStringKey key, const std::string &value) {
-    data->over[key._to_string()] = value; // TODO: type check?
-    write_file(FILENAME, data->over);
+    if (!IMMUTABLE.exchange(true)) {
+        data->over[key._to_string()] = value; // TODO: type check?
+        write_file(FILENAME, data->over);
+    }
+    else {
+        IMMUTABLE.store(false);
+        throw AssertionError ("Config simultaneous writing!");
+    }
+    IMMUTABLE.store(false);
     return true;
 }
 
 bool Config::write(common::ConfigDoubleKey key, double value) {
-    data->over[key._to_string()] = value; // TODO: type check?
-    write_file(FILENAME, data->over);
+    if (!IMMUTABLE.exchange(true)) {
+        data->over[key._to_string()] = value; // TODO: type check?
+        write_file(FILENAME, data->over);
+    }
+    else {
+        IMMUTABLE.store(false);
+        throw AssertionError ("Config simultaneous writing!");
+    }
+    IMMUTABLE.store(false);
     return true;
 }
 
 double Config::readDouble(common::ConfigDoubleKey key) const {
-    if (key._value == common::ConfigDoubleKey::Undefined) {
+    if (IMMUTABLE.load()) {
+        throw AssertionError ("Config reading while writing!");
+    }
+    else if (key._value == common::ConfigDoubleKey::Undefined) {
         throw AssertionError("readDouble called with Undefined");
     }
     double result = 0.0;
     try {
+        //std::shared_lock<std::shared_timed_mutex> read_lock (WRITE_GUARD);
         auto elem_iter = data->over.find(key._to_string());
         if (elem_iter != data->over.end()) {
             result = elem_iter->get<double>();
@@ -79,11 +109,15 @@ double Config::readDouble(common::ConfigDoubleKey key) const {
 }
 
 std::string Config::readStr(common::ConfigStringKey key) const {
-    if (key._value == common::ConfigDoubleKey::Undefined) {
+    if (IMMUTABLE.load()) {
+        throw AssertionError ("Config reading while writing!");
+    }
+    else if (key._value == common::ConfigDoubleKey::Undefined) {
         throw AssertionError("readStr called with Undefined");
     }
     std::string result;
     try {
+        //std::shared_lock<std::shared_timed_mutex> read_lock (WRITE_GUARD);
         auto elem_iter = data->over.find(key._to_string());
         if (elem_iter != data->over.end()) {
             result = elem_iter->get<std::string>();
