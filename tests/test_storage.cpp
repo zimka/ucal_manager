@@ -1,7 +1,7 @@
 #include <utility>
 #include <sstream>
 #include <catch2/catch.hpp>
-#include "single_header/json.hpp"
+#include "json/single_include/nlohmann/json.hpp"
 
 #include "common/utils.h"
 #include "common/timestamp.h"
@@ -29,11 +29,11 @@ TEST_CASE("Signal") {
 	const int len = 10;
 	SignalValue values[len] = {1.0,2.0,1.0,2.0,1.0,2.0,1.0,2.0,1.0,2.0};
 	std::string valid_repr = "[1.0,2.0,1.0,2.0,1.0,2.0,1.0,2.0,1.0,2.0]";
-		
+
 	SECTION("Creation"){
 		SignalData s0;
 		REQUIRE(s0.size() == 0);
-		
+
 		SignalData s1(values, len);
 		REQUIRE(s1.size() == len);
 
@@ -123,7 +123,7 @@ TEST_CASE("Frame"){
 	common::TimeStamp ts1(10, 10);
 	common::TimeStamp ts2(10, 20);
 	common::TimeStamp ts3(10, 30);
-	
+
 	const int len = 5;
 	SignalValue values[len] = {1., 2., 3., 4., 5.};
 	SignalValue values2[len] = {42., 42., 42., 42., 42.};
@@ -156,7 +156,7 @@ TEST_CASE("Frame"){
 	SECTION("Keys interface"){
 		Frame f1(ts1);
 		REQUIRE(f1.keys().size() == 0);
-		f1[k1] = sd;		
+		f1[k1] = sd;
 		REQUIRE(f1.hasKey(k1));
 		REQUIRE_FALSE(f1.hasKey(k2));
 		REQUIRE(f1.keys().size() == 1);
@@ -200,15 +200,15 @@ TEST_CASE("Frame"){
 		f2[k1] = sd;
 
 		//attached ts must be equals or higher than origin ts
-		REQUIRE_FALSE(f1.attachBack(f2)); 
+		REQUIRE_FALSE(f1.attachBack(f2));
 		//frame keys must be the same
-		REQUIRE_FALSE(f1.attachBack(f3)); 
+		REQUIRE_FALSE(f1.attachBack(f3));
 		REQUIRE(f1.size() == sd.size());
 		f3[k1] = sd;
-		REQUIRE(f1.attachBack(f3)); 
+		REQUIRE(f1.attachBack(f3));
 		REQUIRE(f1.size() == 2 * sd.size());
 		f3[k2] = sd;
-		REQUIRE_FALSE(f1.attachBack(f3)); 
+		REQUIRE_FALSE(f1.attachBack(f3));
 		REQUIRE(f1.attachBack(f2, true));
 		f2.setTs(ts3);
 		REQUIRE(f1.attachBack(f2));
@@ -321,7 +321,7 @@ TEST_CASE("Storage"){
 		st.finalize();
 		Frame f2 = buildTestFrame(ts1, len);
 		REQUIRE(st.size() == 2);
-		st.append(std::move(f2));		
+		st.append(std::move(f2));
 		REQUIRE(st.size() == 2);
 		REQUIRE(st.getHash() == hash);
 		st.reset();
@@ -333,9 +333,9 @@ TEST_CASE("Storage"){
 	SECTION("Iteration"){
 		size_t num = 10;
 		common::TimeStamp ts_l0(10, 0);
-		// last frame has len*(num-1) ts, previous - len*(num - 2) 
+		// last frame has len*(num-1) ts, previous - len*(num - 2)
 		common::TimeStamp ts_l1(10, len * (num - 2));
-	
+
 		Storage st(len);
 		Frame f1 = buildTestFrame(ts_l0, num * len);
 		st.append(std::move(f1));
@@ -346,7 +346,7 @@ TEST_CASE("Storage"){
 		}
 		REQUIRE(counter == num);
 		counter = 0;
-		common::TimeStamp tt = st.afterTs(ts_l1)->getTs(); 
+		common::TimeStamp tt = st.afterTs(ts_l1)->getTs();
 		for (auto it=st.afterTs(ts_l1); it!=st.end(); ++it)
 			counter++;
 		REQUIRE(counter == 1);
