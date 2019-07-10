@@ -2,8 +2,8 @@
 // Created by igor on 24.06.19.
 //
 
-#ifndef UCAL_MANAGER_CONFIG_H
-#define UCAL_MANAGER_CONFIG_H
+#ifndef UCAL_COMMON_CONFIG_H
+#define UCAL_COMMON_CONFIG_H
 
 #include <string>
 #include "keys.h"
@@ -28,10 +28,6 @@ namespace common {
         bool reset();
 
     private:
-        std::string getDefault() const;
-        std::string getOverride() const;
-
-        //mutable std::fstream override; // Костыли!
         ConfigDataPtr data;
     };
     using ConfigPtr = std::shared_ptr<Config>;
@@ -40,4 +36,4 @@ namespace common {
 
 }
 
-#endif //UCAL_MANAGER_CONFIG_H
+#endif //UCAL_COMMON_CONFIG_H

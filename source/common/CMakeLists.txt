@@ -10,4 +10,3 @@ add_library(common ${H_LIST} ${CPP_LIST})
 
 target_include_directories(common PUBLIC ${PROJECT_SOURCE_DIR}/third_party)
 target_include_directories(common INTERFACE .)
-target_link_libraries(common PUBLIC pthread)

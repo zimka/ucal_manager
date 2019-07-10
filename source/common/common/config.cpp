@@ -1,7 +1,3 @@
-//
-// Created by igor on 25.06.19.
-//
-
 #include "config.h"
 #include "json/single_include/nlohmann/json.hpp"
 #include <iostream>
@@ -9,13 +5,13 @@
 #include <atomic>
 #include "exceptions.h"
 
+// TODO: make some universal checks (arguments, flags) to avoid code duplicaton
+
 using namespace common;
 using nlohmann::json;
 
 static const char DEFAULT[] =
         R"({"BoardId": "DaqBoard2000", "SamplingFreq": 10.11})";
-
-//static std::shared_timed_mutex WRITE_GUARD;
 
 static std::atomic_bool IMMUTABLE(false);
 
@@ -25,8 +21,7 @@ namespace common {
         json over;
     };
 
-    ConfigPtr acquireConfig()
-    {
+    ConfigPtr acquireConfig() {
         static ConfigPtr instance = std::make_shared<Config>();
         return instance;
     }
@@ -39,17 +34,14 @@ static void write_file(const char* filename, const json& data) {
 }
 
 Config::Config()
-    : data(std::make_unique<ConfigData>())
-{
+    : data(std::make_unique<ConfigData>()) {
     std::ifstream file(FILENAME);
     std::stringstream content_s;
-    //file.seekg(0);
     content_s << file.rdbuf();
     if (!content_s.str().empty()) {
         data->over = json::parse(content_s.str());
     }
     data->def = json::parse(DEFAULT);
-    //std::cout << "File contents: " << content_s.str();
 }
 
 Config::~Config() {
@@ -62,7 +54,6 @@ bool Config::write(common::ConfigStringKey key, const std::string &value) {
         write_file(FILENAME, data->over);
     }
     else {
-        IMMUTABLE.store(false);
         throw AssertionError ("Config simultaneous writing!");
     }
     IMMUTABLE.store(false);
@@ -75,7 +66,6 @@ bool Config::write(common::ConfigDoubleKey key, double value) {
         write_file(FILENAME, data->over);
     }
     else {
-        IMMUTABLE.store(false);
         throw AssertionError ("Config simultaneous writing!");
     }
     IMMUTABLE.store(false);
@@ -91,7 +81,6 @@ double Config::readDouble(common::ConfigDoubleKey key) const {
     }
     double result = 0.0;
     try {
-        //std::shared_lock<std::shared_timed_mutex> read_lock (WRITE_GUARD);
         auto elem_iter = data->over.find(key._to_string());
         if (elem_iter != data->over.end()) {
             result = elem_iter->get<double>();
@@ -100,7 +89,7 @@ double Config::readDouble(common::ConfigDoubleKey key) const {
             result = data->def.at(key._to_string()).get<double>();
         }
     } catch (json::type_error& e) {
-        throw AssertionError (e.what()); // TODO: посмотри, что там за инфа
+        throw AssertionError (e.what());
     } catch (json::out_of_range& e) {
         throw AssertionError (e.what());
     }
@@ -117,7 +106,6 @@ std::string Config::readStr(common::ConfigStringKey key) const {
     }
     std::string result;
     try {
-        //std::shared_lock<std::shared_timed_mutex> read_lock (WRITE_GUARD);
         auto elem_iter = data->over.find(key._to_string());
         if (elem_iter != data->over.end()) {
             result = elem_iter->get<std::string>();
@@ -126,7 +114,7 @@ std::string Config::readStr(common::ConfigStringKey key) const {
             result = data->def.at(key._to_string()).get<std::string>();
         }
     } catch (json::type_error& e) {
-        throw AssertionError (e.what()); // TODO: посмотри, что там за инфа
+        throw AssertionError (e.what());
     } catch (json::out_of_range& e) {
         throw AssertionError (e.what());
     }
@@ -137,16 +125,3 @@ bool Config::reset() {
     data->over.clear();
     return true;
 }
-
-/*std::string Config::getDefault() const {
-    return std::string(DEFAULT);
-}
-
-std::string Config::getOverride() const {
-    std::stringstream content_s;
-    //override.seekg(0);
-    //content_s << override.rdbuf();
-    std::cout << "File contents: " << content_s.str();
-    return content_s.str();
-}*/
-

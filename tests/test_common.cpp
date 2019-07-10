@@ -112,9 +112,9 @@ TEST_CASE("Config"){
 	    double value = mock->readDouble(ConfigDoubleKey::SamplingFreq);
 	    double new_value = value + 1.1;
 	    mock->write(ConfigDoubleKey::SamplingFreq, new_value);
-		REQUIRE(mock->readDouble(ConfigDoubleKey::SamplingFreq) == new_value);
-		REQUIRE(mock->reset());
-		REQUIRE(mock->readDouble(ConfigDoubleKey::SamplingFreq) == value);
+	    REQUIRE(mock->readDouble(ConfigDoubleKey::SamplingFreq) == new_value);
+	    REQUIRE(mock->reset());
+	    REQUIRE(mock->readDouble(ConfigDoubleKey::SamplingFreq) == value);
 	}
 
 	SECTION("Recreation"){
