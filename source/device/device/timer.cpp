@@ -10,7 +10,7 @@ DeviceTimer::DeviceTimer(common::TimeUnit step){
 
 common::TimeStamp DeviceTimer::getStamp() const{
 	if (! isRunning()){
-		common::AssertionError(
+		throw common::AssertionError(
 			"Non-running DeviceTimer is requested for TimeStamp"
 		);
 	}

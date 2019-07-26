@@ -32,7 +32,7 @@ TEST_CASE("DeviceTimer"){
 
     SECTION("Stopped"){
         DeviceTimer timer(td);
-        REQUIRE(timer.getStamp().value() == 0);
+        REQUIRE_THROWS(timer.getStamp().value());
         REQUIRE(!timer.isOverdue());
         REQUIRE(!timer.stop());
     }
