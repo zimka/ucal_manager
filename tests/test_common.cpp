@@ -175,23 +175,3 @@ TEST_CASE("Config") {
     }*/
 }
 
-TEST_CASE("Converter") {
-    ConfigPtr cfg = acquireConfig();
-    double mult = 0.1;
-    cfg->write(ConfigDoubleKey::TimeUnitSize, mult);
-    TimeConverter converter;
-    converter.reconfigure(cfg);
-    uint32_t units = 100;
-    double result = static_cast<double>(units) * mult;
-    REQUIRE(converter.unitsToMilliseconds(units) == result);
-
-    SECTION("Reverse") {
-        REQUIRE(converter.millisecondsToUnits(result) == units);
-    }
-
-    SECTION("ConverterDefault") {
-        TimeConverter converter1;
-        double result1 = static_cast<double>(units);
-        REQUIRE(converter1.unitsToMilliseconds(units) == result1);
-    }
-}

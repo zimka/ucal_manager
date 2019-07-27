@@ -5,12 +5,17 @@
 #include "common/measures.h"
 #include "common/timestamp.h"
 
+#include <memory>
+
+namespace common {
+    class Config;
+    using ConfigPtr = std::shared_ptr<Config>;
+}
+
 namespace device {
     class DeviceTimer {
     public:
         DeviceTimer(common::TimeUnit step);
-
-        void setConverter(common::TimeConverter converter);
 
         common::TimeStamp getStamp() const;
 
@@ -26,13 +31,21 @@ namespace device {
 
         bool isRunning() const;
 
+        void reconfigure (const common::ConfigPtr& config);
+
+        double takeMultiplier() const;
+
+        double unitsToMilliseconds (common::TimeUnit unit) const;
+
+        common::TimeUnit millisecondsToUnits (double interval) const;
+
     private:
         bool is_running_ = false;
         common::TimeUnit step_;
         common::TimeUnit overdue_;
         std::chrono::steady_clock clock_;
         std::chrono::time_point<std::chrono::steady_clock> start_;
-        common::TimeConverter converter_;
+        double timeMultiplier = 1;
     };
 }
 

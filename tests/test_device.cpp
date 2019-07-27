@@ -3,11 +3,12 @@
 #include <catch2/catch.hpp>
 #include <chrono>
 #include <thread>
-#include "common/timestamp.h"
-#include "common/utils.h"
-#include "device/timer.h"
-#include "device/device.h"
-#include "storage/frame.h"
+#include <common/timestamp.h>
+#include <common/config.h>
+#include <common/utils.h>
+#include <device/timer.h>
+#include <device/device.h>
+#include <storage/frame.h>
 
 using namespace device;
 using namespace common;
@@ -93,6 +94,26 @@ TEST_CASE("DeviceTimer") {
         REQUIRE_FALSE(timer.setOverdue(td));
         REQUIRE(timer.stop());
         REQUIRE_FALSE(timer.isRunning());
+    }
+
+    SECTION("TimeConversion") {
+        ConfigPtr cfg = acquireConfig();
+        double mult = 0.1;
+        uint32_t units = 100;
+        cfg->write(ConfigDoubleKey::TimeUnitSize, mult);
+        DeviceTimer timer(td);
+
+        double result_default = units;
+        REQUIRE(timer.unitsToMilliseconds(units) == result_default);
+
+        timer.reconfigure(cfg);
+        double result = static_cast<double>(units) * mult;
+        REQUIRE(timer.unitsToMilliseconds(units) == result);
+
+        REQUIRE(timer.millisecondsToUnits(result) == units);
+
+        SECTION("ConverterDefault") {
+        }
     }
 }
 

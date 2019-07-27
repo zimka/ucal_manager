@@ -2,7 +2,6 @@
 #define UCAL2_COMMON_MEASURES_H
 #include <stdlib.h>
 #include <stdint.h>
-#include "config.h"
 
 namespace common {
     /*!
@@ -30,26 +29,6 @@ namespace common {
     using TimeUnit = uint32_t;
 
 
-    class TimeConverter {
-    public:
-
-        void reconfigure (const ConfigPtr& config) {
-            timeMultiplier = config->readDouble(ConfigDoubleKey::TimeUnitSize);
-        }
-
-        double takeMultiplier() const { return timeMultiplier;}
-
-        double unitsToMilliseconds (TimeUnit unit) const {
-            return timeMultiplier * static_cast<double>(unit);
-        }
-
-        TimeUnit millisecondsToUnits (double interval) const {
-            return static_cast<TimeUnit>(interval / timeMultiplier);
-        }
-
-    private:
-        double timeMultiplier = 1;
-    };
 
     /*!
     * Voltage in millivoltage units

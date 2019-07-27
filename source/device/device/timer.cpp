@@ -1,5 +1,6 @@
 #include "timer.h"
 #include "common/exceptions.h"
+#include <common/config.h>
 
 using namespace device;
 
@@ -9,10 +10,6 @@ DeviceTimer::DeviceTimer(common::TimeUnit step) {
     start_ = clock_.now();
 };
 
-void DeviceTimer::setConverter(common::TimeConverter converter) {
-    converter_ = std::move(converter);
-}
-
 common::TimeStamp DeviceTimer::getStamp() const {
     if (!isRunning()) {
         throw common::AssertionError(
@@ -20,7 +17,7 @@ common::TimeStamp DeviceTimer::getStamp() const {
         );
     }
     uint32_t mu_seconds = (std::chrono::duration_cast<std::chrono::milliseconds>(clock_.now() - start_)).count();
-    common::TimeUnit duration = converter_.millisecondsToUnits(mu_seconds);
+    common::TimeUnit duration = millisecondsToUnits(mu_seconds);
     return {step_, duration / step_};
 };
 
@@ -65,10 +62,24 @@ bool DeviceTimer::isOverdue() const {
         return false;
     }
     uint32_t mu_sec = (std::chrono::duration_cast<std::chrono::milliseconds>(clock_.now() - start_)).count();
-    common::TimeUnit duration = converter_.millisecondsToUnits(mu_sec);
+    common::TimeUnit duration = millisecondsToUnits(mu_sec);
     return duration > overdue_;
 };
 
 bool DeviceTimer::isRunning() const {
     return is_running_;
 };
+
+void DeviceTimer::reconfigure (const common::ConfigPtr& config) {
+    timeMultiplier = config->readDouble(common::ConfigDoubleKey::TimeUnitSize);
+}
+
+double DeviceTimer::takeMultiplier() const { return timeMultiplier;}
+
+double DeviceTimer::unitsToMilliseconds (common::TimeUnit unit) const {
+    return timeMultiplier * static_cast<double>(unit);
+}
+
+common::TimeUnit DeviceTimer::millisecondsToUnits (double interval) const {
+    return static_cast<common::TimeUnit>(interval / timeMultiplier);
+}
