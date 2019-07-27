@@ -3,5 +3,5 @@
 
 
 int main(){
-	std::cout << common::ACCURACY_ERROR << std::endl;
+    std::cout << common::ACCURACY_ERROR << std::endl;
 }
