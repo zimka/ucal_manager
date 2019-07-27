@@ -34,7 +34,7 @@ static void write_file(const char* filename, const json& data) {
 }
 
 Config::Config()
-    : data(std::make_unique<ConfigData>()) {
+        : data(std::make_unique<ConfigData>()) {
     std::ifstream file(FILENAME);
     std::stringstream content_s;
     content_s << file.rdbuf();
@@ -48,13 +48,13 @@ Config::~Config() {
     write_file(FILENAME, data->over);
 }
 
-bool Config::write(common::ConfigStringKey key, const std::string &value) {
+bool Config::write(common::ConfigStringKey key, std::string const& value) {
     if (!IMMUTABLE.exchange(true)) {
         data->over[key._to_string()] = value; // TODO: type check?
         write_file(FILENAME, data->over);
     }
     else {
-        throw AssertionError ("Config simultaneous writing!");
+        throw AssertionError("Config simultaneous writing!");
     }
     IMMUTABLE.store(false);
     return true;
@@ -66,7 +66,7 @@ bool Config::write(common::ConfigDoubleKey key, double value) {
         write_file(FILENAME, data->over);
     }
     else {
-        throw AssertionError ("Config simultaneous writing!");
+        throw AssertionError("Config simultaneous writing!");
     }
     IMMUTABLE.store(false);
     return true;
@@ -74,7 +74,7 @@ bool Config::write(common::ConfigDoubleKey key, double value) {
 
 double Config::readDouble(common::ConfigDoubleKey key) const {
     if (IMMUTABLE.load()) {
-        throw AssertionError ("Config reading while writing!");
+        throw AssertionError("Config reading while writing!");
     }
     else if (key._value == common::ConfigDoubleKey::Undefined) {
         throw AssertionError("readDouble called with Undefined");
@@ -89,9 +89,9 @@ double Config::readDouble(common::ConfigDoubleKey key) const {
             result = data->def.at(key._to_string()).get<double>();
         }
     } catch (json::type_error& e) {
-        throw AssertionError (e.what());
+        throw AssertionError(e.what());
     } catch (json::out_of_range& e) {
-        throw AssertionError (e.what());
+        throw AssertionError(e.what());
     }
 
     return result;
@@ -99,7 +99,7 @@ double Config::readDouble(common::ConfigDoubleKey key) const {
 
 std::string Config::readStr(common::ConfigStringKey key) const {
     if (IMMUTABLE.load()) {
-        throw AssertionError ("Config reading while writing!");
+        throw AssertionError("Config reading while writing!");
     }
     else if (key._value == common::ConfigDoubleKey::Undefined) {
         throw AssertionError("readStr called with Undefined");
@@ -114,9 +114,9 @@ std::string Config::readStr(common::ConfigStringKey key) const {
             result = data->def.at(key._to_string()).get<std::string>();
         }
     } catch (json::type_error& e) {
-        throw AssertionError (e.what());
+        throw AssertionError(e.what());
     } catch (json::out_of_range& e) {
-        throw AssertionError (e.what());
+        throw AssertionError(e.what());
     }
     return result;
 }

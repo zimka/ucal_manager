@@ -6,7 +6,8 @@
 #include "common/timestamp.h"
 #include "storage/signal.h"
 
-void testSleep(common::TimeUnit t){
-	//TODO: add sleep
+void testSleep(common::TimeUnit t) {
+    //TODO: add sleep
 }
+
 #endif//UCAL2_TESTS_UTILS_H
