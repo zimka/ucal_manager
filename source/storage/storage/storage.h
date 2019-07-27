@@ -12,11 +12,11 @@ namespace storage {
 
         Storage(size_t frame_size = 10, bool enforce_ts = true);
 
-        bool append(Frame &&f);
+        bool append(Frame&& f);
 
         bool finalize();
 
-        Frame const &operator[](size_t ind);
+        Frame const& operator[](size_t ind);
 
         size_t size() const;
 

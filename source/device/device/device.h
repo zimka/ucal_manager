@@ -19,7 +19,7 @@ namespace device {
 
     class IDevice {
     public:
-        virtual void setProfiles(const ProfileSetup &profiles, common::TimeUnit profile_length) = 0;
+        virtual void setProfiles(ProfileSetup const& profiles, common::TimeUnit profile_length) = 0;
 
         virtual void setDuration(common::TimeUnit total_duration) = 0;
 
@@ -44,7 +44,7 @@ namespace device {
     public:
         MockDevice();
 
-        void setProfiles(const ProfileSetup &profiles, common::TimeUnit profile_length) override;
+        void setProfiles(ProfileSetup const& profiles, common::TimeUnit profile_length) override;
 
         void setDuration(common::TimeUnit total_duration) override;
 
@@ -79,7 +79,7 @@ namespace device {
 
     class DaqboardDevice : public IDevice {
     public:
-        void setProfiles(const ProfileSetup &, common::TimeUnit profile_length) override;
+        void setProfiles(ProfileSetup const&, common::TimeUnit profile_length) override;
 
         void setDuration(common::TimeUnit total_duration) override;
 

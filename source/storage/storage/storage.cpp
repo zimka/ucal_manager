@@ -10,7 +10,7 @@ Storage::Storage(size_t frame_size, bool enforce_ts)
     reset();
 };
 
-bool Storage::append(Frame &&f) {
+bool Storage::append(Frame&& f) {
     // No checks for keys set of f, it is up to the client
     // Append consists of 3 stages:
     // 1. attach new frame to head
@@ -19,24 +19,30 @@ bool Storage::append(Frame &&f) {
     size_t current_size = size();
 
     common::TimeStamp last_ts = f.getTs();
-    if (size())
+    if (size()) {
         last_ts = data_[size() - 1].getTs();
-    if (head_ != nullptr)
+    }
+    if (head_ != nullptr) {
         last_ts = head_->getTs();
-    else
+    }
+    else {
         head_ = std::make_unique<Frame>(f.getTs());
+    }
 
     bool invalid_ts = last_ts > f.getTs();
     if (invalid_ts) {
-        if (!enforce_ts_)
+        if (!enforce_ts_) {
             return false;
-        else
+        }
+        else {
             f.setTs(last_ts);
+        }
     }
     last_ts = f.getTs();
     bool status_ok = head_->attachBack(f);
-    if (!status_ok)
+    if (!status_ok) {
         return false;
+    }
     size_t data_chunks_num = head_->size() / frame_size_;
 
     for (size_t i = 1; i <= data_chunks_num; ++i) {
@@ -46,16 +52,18 @@ bool Storage::append(Frame &&f) {
         head_ = std::make_unique<Frame>(std::move(rest));
     }
 
-    if (!head_->size())
+    if (!head_->size()) {
         head_ = nullptr;
+    }
     return true;
 };
 
-Frame const &Storage::operator[](size_t ind) {
-    if (ind >= size())
+Frame const& Storage::operator[](size_t ind) {
+    if (ind >= size()) {
         throw common::ValueError(
                 "Index " + std::to_string(ind) + " is higher than len " + std::to_string(size())
         );
+    }
     return data_.at(ind);
 };
 
@@ -80,7 +88,7 @@ Storage::Iterator Storage::afterTs(common::TimeStamp ts) const {
     return std::find_if(
             data_.begin(),
             data_.end(),
-            [&ts](const Frame &f) { return (f.getTs() > ts); }
+            [&ts](const Frame& f) { return (f.getTs() > ts); }
     );
 };
 
@@ -100,8 +108,9 @@ bool Storage::reset() {
 };
 
 bool Storage::finalize() {
-    if (head_ == nullptr)
+    if (head_ == nullptr) {
         return false;
+    }
     data_.push_back(std::move(*head_));
     head_ = nullptr;
     return true;

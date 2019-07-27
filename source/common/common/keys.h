@@ -1,8 +1,9 @@
 #ifndef UCAL2_COMMON_KEYS_H
 #define UCAL2_COMMON_KEYS_H
+
 #include "better_enums/enum.h"
 
-namespace common{
+namespace common {
     /*!
     * Key to label signal read from device.
     */
@@ -28,5 +29,5 @@ namespace common{
     * Key to indentify double config field
     */
     BETTER_ENUM(ConfigDoubleKey, char, SamplingFreq, TimeUnitSize, Undefined);
-    }
+}
 #endif//UCAL2_COMMON_KEYS_H

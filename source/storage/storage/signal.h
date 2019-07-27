@@ -19,15 +19,15 @@ namespace storage {
     public:
         SignalData();
 
-        SignalData(SignalValue *start, size_t len, size_t step = 1);
+        SignalData(SignalValue* start, size_t len, size_t step = 1);
 
-        SignalData(SignalData const &other);
+        SignalData(SignalData const& other);
 
-        SignalData(SignalData &&other) noexcept;
+        SignalData(SignalData&& other) noexcept;
 
-        SignalData &operator=(SignalData const &other);
+        SignalData& operator=(SignalData const& other);
 
-        SignalData &operator=(SignalData &&other) noexcept;
+        SignalData& operator=(SignalData&& other) noexcept;
 
         size_t size() const;
 
@@ -37,7 +37,7 @@ namespace storage {
 
         SignalData detachBack(size_t len);
 
-        void attachBack(SignalData const &other);
+        void attachBack(SignalData const& other);
 
         ~SignalData() = default;
 
@@ -46,12 +46,12 @@ namespace storage {
     private:
         std::unique_ptr<Array> data_;
 
-        void swap(SignalData &other);
+        void swap(SignalData& other);
     };
 
-    std::ostream &operator<<(std::ostream &os, const SignalData &sd);
+    std::ostream& operator<<(std::ostream& os, SignalData const& sd);
 
-    std::istream &operator>>(std::istream &is, SignalData &sd);
+    std::istream& operator>>(std::istream& is, SignalData& sd);
 
 }
 #endif //UCAL2_STORAGE_SIGNAL_H

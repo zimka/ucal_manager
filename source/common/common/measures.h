@@ -1,5 +1,6 @@
 #ifndef UCAL2_COMMON_MEASURES_H
 #define UCAL2_COMMON_MEASURES_H
+
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -33,6 +34,6 @@ namespace common {
     /*!
     * Voltage in millivoltage units
     */
-using VoltUnit = int32_t;
+    using VoltUnit = int32_t;
 }
 #endif//UCAL2_COMMON_MEASURES_H

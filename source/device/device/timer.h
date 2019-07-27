@@ -9,6 +9,7 @@
 
 namespace common {
     class Config;
+
     using ConfigPtr = std::shared_ptr<Config>;
 }
 
@@ -31,13 +32,13 @@ namespace device {
 
         bool isRunning() const;
 
-        void reconfigure (const common::ConfigPtr& config);
+        void reconfigure(common::ConfigPtr const& config);
 
         double takeMultiplier() const;
 
-        double unitsToMilliseconds (common::TimeUnit unit) const;
+        double unitsToMilliseconds(common::TimeUnit unit) const;
 
-        common::TimeUnit millisecondsToUnits (double interval) const;
+        common::TimeUnit millisecondsToUnits(double interval) const;
 
     private:
         bool is_running_ = false;

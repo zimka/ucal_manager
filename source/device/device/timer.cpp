@@ -70,16 +70,16 @@ bool DeviceTimer::isRunning() const {
     return is_running_;
 };
 
-void DeviceTimer::reconfigure (const common::ConfigPtr& config) {
+void DeviceTimer::reconfigure(common::ConfigPtr const& config) {
     timeMultiplier = config->readDouble(common::ConfigDoubleKey::TimeUnitSize);
 }
 
-double DeviceTimer::takeMultiplier() const { return timeMultiplier;}
+double DeviceTimer::takeMultiplier() const { return timeMultiplier; }
 
-double DeviceTimer::unitsToMilliseconds (common::TimeUnit unit) const {
+double DeviceTimer::unitsToMilliseconds(common::TimeUnit unit) const {
     return timeMultiplier * static_cast<double>(unit);
 }
 
-common::TimeUnit DeviceTimer::millisecondsToUnits (double interval) const {
+common::TimeUnit DeviceTimer::millisecondsToUnits(double interval) const {
     return static_cast<common::TimeUnit>(interval / timeMultiplier);
 }

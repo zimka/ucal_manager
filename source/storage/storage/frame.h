@@ -24,9 +24,9 @@ namespace storage {
 
         Frame(common::TimeStamp ts);
 
-        Frame(Frame &&other) noexcept;
+        Frame(Frame&& other) noexcept;
 
-        Frame(Frame const &other) = delete;
+        Frame(Frame const& other) = delete;
 
         KeyArray keys() const;
 
@@ -46,35 +46,35 @@ namespace storage {
 
         // TODO: Frame const& would be better, but
         // cant use it because of non-const operator[]
-        bool attachBack(Frame &other, bool enforce_ts = false);
+        bool attachBack(Frame& other, bool enforce_ts = false);
 
         class SignalDataProxy {
         public:
             SignalDataProxy() = delete;
 
             SignalDataProxy(
-                    SignalKeyValue &source,
-                    size_t &size,
+                    SignalKeyValue& source,
+                    size_t& size,
                     common::SignalKey key = common::SignalKey::Undefined
             );
 
-            operator SignalData &();
+            operator SignalData&();
 
             SignalData stub;
 
-            SignalDataProxy &operator=(SignalData const &sd);
+            SignalDataProxy& operator=(SignalData const& sd);
 
-            SignalDataProxy &operator=(SignalData &&sd);
+            SignalDataProxy& operator=(SignalData&& sd);
 
         private:
-            SignalKeyValue &source_;
-            size_t &size_;
+            SignalKeyValue& source_;
+            size_t& size_;
             common::SignalKey key_;
         };
 
         SignalDataProxy operator[](const common::SignalKey key);
 
-        SignalData const &operator[](const common::SignalKey key) const;
+        SignalData const& operator[](const common::SignalKey key) const;
 
     private:
         SignalKeyValue data_;
@@ -84,8 +84,8 @@ namespace storage {
         common::TimeStamp computeDetachedTs(size_t len) const;
     };
 
-    void to_json(json &j, const Frame &f);
+    void to_json(json& j, Frame const& f);
 
-    std::ostream &operator<<(std::ostream &os, const Frame &sd);
+    std::ostream& operator<<(std::ostream& os, Frame const& sd);
 }
 #endif //UCAL2_STORAGE_FRAME_H

@@ -6,7 +6,7 @@ using namespace device;
 
 MockDevice::MockDevice() : timer_(1) {};
 
-void MockDevice::setProfiles(const ProfileSetup &, common::TimeUnit profile_length) {
+void MockDevice::setProfiles(ProfileSetup const&, common::TimeUnit profile_length) {
     checkState(DeviceState::CanSet);
     //MockDevice always returns constant voltage 1 in all channels
 }

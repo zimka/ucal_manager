@@ -25,13 +25,13 @@ namespace common {
 
         std::string repr() const;
 
-        bool operator==(const TimeStamp &other) const;
+        bool operator==(TimeStamp const& other) const;
 
-        bool operator<(const TimeStamp &other) const;
+        bool operator<(TimeStamp const& other) const;
 
-        bool operator>(const TimeStamp &other) const;
+        bool operator>(TimeStamp const& other) const;
     };
 
-    std::ostream &operator<<(std::ostream &os, const TimeStamp &ts);
+    std::ostream& operator<<(std::ostream& os, TimeStamp const& ts);
 }
 #endif//UCAL2_COMMON_TIMESTAMP_H
