@@ -13,7 +13,7 @@ DeviceTimer::DeviceTimer(common::TimeUnit step) {
 common::TimeStamp DeviceTimer::getStamp() const {
     if (!isRunning()) {
         throw common::AssertionError(
-                "Non-running DeviceTimer is requested for TimeStamp"
+            "Non-running DeviceTimer is requested for TimeStamp"
         );
     }
     uint32_t mu_seconds = (std::chrono::duration_cast<std::chrono::milliseconds>(clock_.now() - start_)).count();
