@@ -24,7 +24,13 @@ namespace device {
     constexpr size_t DAQBOARD_SIGNALS_NUMBER = 5;
     constexpr size_t DAQBOARD_CONTROLS_NUMBER = 2;
 
-
+    /*!
+    Represents interface to hardware. Hardware may have 3 states: 
+    - CanSet (configuration changes can be made)
+    - Prepared (configuration is validated and hardware is ready to start) 
+    - Running (hardware is taking data)
+    Supported configuration features are determined by "setSomething" methods.
+    */
     class IDevice {
     public:
         virtual void setProfiles(ProfileSetup const& profiles, common::TimeUnit profile_length) = 0;
@@ -50,6 +56,9 @@ namespace device {
         virtual ~IDevice() = default;
     };
 
+    /*!
+    Fake device to use in tests in Linux builds.
+    */
     class MockDevice : public IDevice {
     public:
         MockDevice(std::string name = DEFAULT_DAQBOARD_NAME);
@@ -87,6 +96,9 @@ namespace device {
         void checkDue() const;
     };
 
+    /*!
+    Device for Daqboard3001USB hardware. Uses DAQX api.
+    */
     class DaqboardDevice : public IDevice {
     public:
         DaqboardDevice(std::string name = DEFAULT_DAQBOARD_NAME);

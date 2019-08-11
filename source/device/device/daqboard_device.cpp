@@ -27,21 +27,14 @@ DaqboardDevice::~DaqboardDevice() {
 
 void DaqboardDevice::setProfiles(const ProfileSetup& profiles, common::TimeUnit profile_length) {
     checkState({DeviceState::CanSet});
+    auto keys = {common::ControlKey::Vg, common::ControlKey::Vm};
     if (profiles.size() > 1) {
         // Check that profiles size is the same
-        int32_t len = -1;
-        for (auto& kv : profiles) {
-            if (len < 0) { // first profile may have any length
-                len = kv.second.size();
-            }
-            if (kv.second.size() != len) {
-                throw common::DeviceError("All channel profiles must have same size");
-            }
-        }
-        if (len == 0) {
-            throw common::DeviceError("Channels profiles must have at least one point");
+        if (profiles.at(common::ControlKey::Vg).size() != profiles.at(common::ControlKey::Vm).size()) {
+            throw common::DeviceError("All channel profiles must have same size");
         }
     }
+    // Map MilliVolts(-10; 10) to Counts(0, 65K)
     for (auto pair : profiles) {
         std::vector<WORD> buffer;
         for (auto v : pair.second) {
@@ -124,15 +117,19 @@ storage::Frame DaqboardDevice::getData() {
     DWORD get_scans_number;
     daqAdcTransferGetStat(handle_, &active, &ready_scans_number);
     auto frame = storage::Frame();
+    // check if DaqBoard keeps acquiring data
     bool is_running = active & DaafAcqActive;
     if (ready_scans_number) {
         frame.setTs(timer_.getStamp());
         std::vector<uint16_t> buffer(2 * ready_scans_number * DAQBOARD_SIGNALS_NUMBER);
+        // Get all data in counts
         daqAdcTransferBufData(handle_, (PWORD)(buffer.data()), ready_scans_number, DabtmRetAvail, &get_scans_number);
         std::vector<storage::SignalValue> buffer_signal;
+        // Map counts to MilliVolts
         for (auto i = 0; i < get_scans_number * DAQBOARD_SIGNALS_NUMBER; i++) {
             buffer_signal.push_back(fromCount(buffer[i]));
         }
+        // Parse buffer from [Ua0, Ub0, Uc0, Ua1, Ub1, Uc1...] to Ua[], Ub[], Uc[]
         for (auto key : common::SignalKey::_values()) {
             if (key != +common::SignalKey::Undefined) {
                 frame[key] = storage::SignalData(
@@ -143,10 +140,13 @@ storage::Frame DaqboardDevice::getData() {
             }
         }
     }
+    // Daqboard can stop itself if all scans are taken
     if ((ready_scans_number) && (!is_running)) {
+        // It occurs only when total_duration_ is non zero (for finite scan)
         if (!total_duration_) {
             throw common::AssertionError("Device is not running and has data, but does not have total_duration");
         }
+        // We gave all the data and now can switch state to CanSet
         stop();
     }
     return frame;
@@ -292,7 +292,7 @@ uint32_t device::DaqboardDevice::getSignalChannelId(common::SignalKey key) const
     if (key == +common::SignalKey::Undefined) {
         throw common::AssertionError("'Undefined' SignalKey does not have a channel");
     }
-    std::map<common::SignalKey, uint8_t> signal_ids = {
+    static const std::map<common::SignalKey, uint8_t> signal_ids = {
         {common::SignalKey::Uref, 0},
         {common::SignalKey::Umod, 1},
         {common::SignalKey::Utpl, 2},
@@ -309,7 +309,7 @@ uint32_t device::DaqboardDevice::getControlChannelId(common::ControlKey key) con
     if (key == +common::ControlKey::Undefined) {
         throw common::AssertionError("'Undefined' ControlKey does not have a channel");
     }
-    std::map<common::ControlKey, uint32_t> control_ids = {
+    static const std::map<common::ControlKey, uint32_t> control_ids = {
         {common::ControlKey::Vg, 0},
         {common::ControlKey::Vm, 1},
     };
