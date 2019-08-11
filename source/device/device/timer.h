@@ -49,5 +49,4 @@ namespace device {
         double timeMultiplier = 1;
     };
 }
-
 #endif//UCAL2_DEVICE_TIMER_H

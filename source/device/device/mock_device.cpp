@@ -4,11 +4,16 @@
 
 using namespace device;
 
-MockDevice::MockDevice() : timer_(1) {};
+MockDevice::MockDevice(std::string name) :timer_(1) {};
 
-void MockDevice::setProfiles(ProfileSetup const&, common::TimeUnit profile_length) {
+void MockDevice::setProfiles(const ProfileSetup&, common::TimeUnit profile_length) {
     checkState(DeviceState::CanSet);
     //MockDevice always returns constant voltage 1 in all channels
+}
+
+void MockDevice::setTimer(DeviceTimer timer) {
+    checkState(DeviceState::CanSet);
+    timer_ = timer;
 }
 
 void MockDevice::setDuration(common::TimeUnit total_duration) {
@@ -29,7 +34,7 @@ void MockDevice::setReadingSampling(common::TimeUnit step, uint16_t per_points) 
 }
 
 std::string MockDevice::getSetup() const {
-    return std::string();
+    return std::string("{'key':'value'}");
 }
 
 void MockDevice::prepare() {
