@@ -36,11 +36,11 @@ private:
 };
 
 void NoPlanState::runNext() {
-    throw common::AssertionError("Cannot run anything while in NoPlanState!");
+    throw common::StateViolationError("Cannot run anything while in NoPlanState!");
 }
 
 void NoPlanState::stop() {
-    throw common::AssertionError("Cannot stop anything while in NoPlanState!");
+    throw common::StateViolationError("Cannot stop anything while in NoPlanState!");
 }
 
 void NoPlanState::setPlan(DummyPlan plan) {

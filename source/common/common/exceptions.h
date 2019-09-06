@@ -50,6 +50,15 @@ namespace common {
 
     };
 
+    /*!
+     * Client command cannot be executed in current state
+     */
+    class StateViolationError : public UcalManagerException {
+    public:
+        explicit StateViolationError(std::string const& message) :
+                UcalManagerException("StateViolationErrror: " + message) {};
+    };
+
     class NotImplementedError : public UcalManagerException {
     public:
         explicit NotImplementedError(std::string const& s) :
