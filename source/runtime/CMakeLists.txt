@@ -1,8 +1,10 @@
 set(HEADERS
     runtime/block.h
+    runtime/state_machine.h
 )
 set(SOURCES
     runtime/block.cpp
+    runtime/state_machine.cpp
 )
 
 add_library(runtime ${HEADERS} ${SOURCES})
