@@ -6,43 +6,67 @@
 #define UCAL_MANAGER_STATE_MACHINE_H
 
 #include <memory>
+#include <better_enums/enum.h>
+#include <common/config.h>
 
-struct DummyPlan { bool fool; };
-struct DummyContext { bool fool; };
+namespace runtime {
+    struct DummyPlan {
+        bool fool;
+    };
+    struct DummyContext {
+        DummyPlan plan;
+    };
 
-class IState {
-public:
-    virtual void update() {}; // Does nothing, this is by design
-    virtual void runNext() = 0;
-    virtual void stop() = 0;
-    virtual void setPlan(DummyPlan) = 0;
-    virtual DummyPlan getPlan() = 0;
-    //virtual setConfig(json) = 0;
-    //virtual json getConfig() = 0;
-    //virtual IState& getState() = 0;
-    //virtual Data getData() = 0;
+    BETTER_ENUM(MachineState, unsigned, NotReady, Error, HasPlan, Executing)
 
-};
+    class IState {
+    public:
+        virtual void update() {}; // Does nothing, this is by design
 
-using StatePtr = std::unique_ptr<IState>;
+        virtual MachineState getState() = 0;
 
-class StateMachine : public IState {
-private:
-    StatePtr state_;
-    DummyContext dummyContext_;
+        virtual common::Config const& getConfig() = 0; ///< returns read-only config reference
 
-public:
-    void update() override;
-    void runNext() override;
-    void stop() override;
-    void setPlan(DummyPlan) override;
-    DummyPlan getPlan() override;
-    //setConfig(json) override;
-    //json getConfig() override;
-    //IState& getState() override;
-    //Data getData() override;
-    
-    DummyContext& getContext();
-    void setState(StatePtr new_state);
-};
+        virtual DummyPlan getPlan() = 0;
+
+        //virtual Data getData() = 0;
+
+        virtual void setConfig(common::Config) = 0;
+
+        virtual void setPlan(DummyPlan) = 0;
+
+        virtual void runNext() = 0;
+
+        virtual void stop() = 0;
+
+    };
+
+    using StatePtr = std::unique_ptr<IState>;
+
+    class StateMachine : public IState {
+    private:
+        StatePtr state_;
+        DummyContext dummyContext_;
+
+    public:
+        void update() override;
+
+        common::Config const& getConfig() override;
+
+        void runNext() override;
+
+        void stop() override;
+
+        void setPlan(DummyPlan) override;
+
+        DummyPlan getPlan() override;
+        //setConfig(json) override;
+        MachineState getState() override;
+        //Data getData() override;
+
+        DummyContext& getContext();
+
+        void setState(StatePtr new_state);
+    };
+}
 #endif //UCAL_MANAGER_STATE_MACHINE_H
