@@ -8,16 +8,19 @@
 #include <memory>
 #include <better_enums/enum.h>
 #include <common/config.h>
+#include <json/include/nlohmann/json_fwd.hpp>
 
 namespace runtime {
+    using nlohmann::json;
     struct DummyPlan {
-        bool fool;
+        bool valid;
     };
     struct DummyContext {
         DummyPlan plan;
     };
 
-    BETTER_ENUM(MachineState, unsigned, NotReady, Error, HasPlan, Executing)
+    using MachineStateType = unsigned;
+    BETTER_ENUM(MachineState, MachineStateType, NotReady, Error, NoPlan, HasPlan, Executing)
 
     class IState {
     public:
@@ -31,9 +34,9 @@ namespace runtime {
 
         //virtual Data getData() = 0;
 
-        virtual void setConfig(common::Config) = 0;
+        virtual void setConfig(json const& json) = 0;
 
-        virtual void setPlan(DummyPlan) = 0;
+        virtual void setPlan(DummyPlan const&) = 0;
 
         virtual void runNext() = 0;
 
@@ -49,24 +52,58 @@ namespace runtime {
         DummyContext dummyContext_;
 
     public:
-        void update() override;
+        //void update() override;
+
+        MachineState getState() override;
 
         common::Config const& getConfig() override;
+
+        DummyPlan getPlan() override;
+
+        //Data getData() override;
+
+        void setConfig(json const&) override;
+
+        void setPlan(DummyPlan const&) override;
 
         void runNext() override;
 
         void stop() override;
 
-        void setPlan(DummyPlan) override;
-
-        DummyPlan getPlan() override;
-        //setConfig(json) override;
-        MachineState getState() override;
-        //Data getData() override;
-
         DummyContext& getContext();
 
         void setState(StatePtr new_state);
     };
+
+    template <MachineStateType S>
+    class GenericState : public IState {
+    public:
+        GenericState(StateMachine* machine) : machine_(machine) {}
+        MachineState getState() override;
+
+        common::Config const& getConfig() override;
+
+        DummyPlan getPlan() override;
+
+        /*Data getData() override;*/
+
+        void setConfig(json const&) override;
+
+        void setPlan(DummyPlan const&) override;
+
+        void runNext() override;
+
+        void stop() override;
+
+    private:
+        StateMachine* machine_;
+
+        void throwError(const char* name);
+    };
+
+    template <MachineStateType S>
+    StatePtr createState(StateMachine* machine) {
+        return std::make_unique<GenericState<S>>(machine);
+    }
 }
 #endif //UCAL_MANAGER_STATE_MACHINE_H

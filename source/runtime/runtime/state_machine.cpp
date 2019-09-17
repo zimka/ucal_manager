@@ -7,84 +7,47 @@
 
 #include <sstream>
 
-#define STATE_DECL(STATE_NAME) \
-public: \
-    STATE_NAME(StateMachine* machine) : machine_(machine) {} \
-    MachineState getState() override; \
-    common::Config const& getConfig() override;\
-    DummyPlan getPlan() override; \
-    /*Data getData() override;*/ \
-    void setConfig(common::Config) override; \
-    void setPlan(DummyPlan) override; \
-    void runNext() override; \
-    void stop() override; \
-    \
-private: \
-    StateMachine* machine_;
-
 using namespace runtime;
 
-class NoPlanState : public IState
-{
-STATE_DECL(NoPlanState)
-};
 
-class HasPlanState : public IState
-{
-STATE_DECL(HasPlanState)
-};
-
-class NotReadyState : public IState
-{
-STATE_DECL(NotReadyState)
-};
-#undef STATE_INTERFACE_DECL
-
-void NoPlanState::runNext() {
-    throw common::StateViolationError("Cannot run anything while in NoPlanState!");
+MachineState StateMachine::getState() {
+    return state_->getState();
 }
 
-void NoPlanState::stop() {
-    throw common::StateViolationError("Cannot stop anything while in NoPlanState!");
+common::Config const& StateMachine::getConfig() {
+    return state_->getConfig();
 }
 
-void NoPlanState::setPlan(DummyPlan plan) {
-    auto context = machine_->getContext();
-    // TODO: write logic for context and plan
-    machine_->setState(std::make_unique<HasPlanState>(machine_));
+DummyPlan StateMachine::getPlan() {
+    return state_->getPlan();
 }
 
-DummyPlan NoPlanState::getPlan() {
-    return machine_->getContext().plan;
+void StateMachine::setConfig(json const& json_cfg) {
+    state_->setConfig(json_cfg);
 }
 
-template <unsigned S>
-class GenericState : public IState {
-public:
-    GenericState(StateMachine* machine) : machine_(machine) {}
-    MachineState getState() override;
+void StateMachine::setPlan(DummyPlan const& new_plan) {
+    state_->setPlan(new_plan);
+    //dummyContext_.plan = new_plan;
+}
 
-    common::Config const& getConfig() override;
+void StateMachine::runNext() {
+    state_->runNext();
+}
 
-    DummyPlan getPlan() override;
+void StateMachine::stop() {
+    state_->stop();
+}
 
-    /*Data getData() override;*/
+DummyContext& StateMachine::getContext() {
+    return dummyContext_;
+}
 
-    void setConfig(common::Config) override;
+void StateMachine::setState(StatePtr new_state) {
+    state_ = std::move(new_state);
+}
 
-    void setPlan(DummyPlan) override;
-
-    void runNext() override;
-
-    void stop() override;
-
-private:
-    StateMachine* machine_;
-
-    void throwError(const char* name);
-};
-
-template <unsigned S>
+template <MachineStateType S>
 void GenericState<S>::throwError(const char* name) {
     std::stringstream message;
     message << "Cannot execute " << name << " from "
@@ -92,11 +55,47 @@ void GenericState<S>::throwError(const char* name) {
     throw common::StateViolationError(message.str());
 }
 
+template <MachineStateType S>
+StatePtr stateGenerator (StateMachine* machine) {
+    return std::make_unique<GenericState<S>>(machine);
+}
+
+constexpr
+MachineState::_integral f (MachineState::_value_iterable iter) {
+    return iter.begin()->_value;
+}
+
+// THIS CODE IS FAKE AND MUST NOT BE EXECUTED
+// IT'S SOLE PURPOSE IS TO INSTATIATE ALL NEEDED TEMPLATE VARIANTS IN COMPILE TIME
+template <size_t _idx>
+class GenRecursive {
+public:
+    static int exec() {
+        constexpr auto iter = MachineState::_values();
+        constexpr auto start = iter.begin() + _idx;
+        constexpr auto end = iter.end();
+        GenericState<start->_value>(nullptr);
+        GenRecursive<_idx + 1>::exec();
+        return 0;
+    }
+};
+
+template <>
+class GenRecursive<MachineState::_size()> {
+public:
+    static int exec() {
+        return 0;
+    }
+};
+
+static int foo = GenRecursive<0>::exec();
+// END OF FAKE CODE
+
 /*!
  * Defines member function that throws exception
  */
 #define STATE_DEFAULT_THROW(retv, fname, ...) \
-template <unsigned S> \
+template <MachineStateType S> \
 retv GenericState<S>::fname(__VA_ARGS__) { throwError(#fname); }
 
 /*!
@@ -104,21 +103,21 @@ retv GenericState<S>::fname(__VA_ARGS__) { throwError(#fname); }
  * @tparam S numeric representation of MachineState
  * @return MachineState value of current state
  */
-template <unsigned S>
+template <MachineStateType S>
 MachineState GenericState<S>::getState() {
     return MachineState::_from_integral(S);
 }
 
-template <unsigned S>
+template <MachineStateType S>
 common::Config const& GenericState<S>::getConfig() {
     return *common::acquireConfig();
 }
 
 STATE_DEFAULT_THROW(DummyPlan, getPlan)
 
-STATE_DEFAULT_THROW(void, setConfig, common::Config)
+STATE_DEFAULT_THROW(void, setConfig, json const&)
 
-STATE_DEFAULT_THROW(void, setPlan, DummyPlan)
+STATE_DEFAULT_THROW(void, setPlan, DummyPlan const&)
 
 STATE_DEFAULT_THROW(void, runNext)
 

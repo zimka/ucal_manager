@@ -11,14 +11,7 @@ namespace common {
      */
     class UcalManagerException : public std::runtime_error {
     public:
-        explicit UcalManagerException(std::string const& s) : runtime_error(s), what_message(s) {};
-
-        virtual const char* what() noexcept {
-            return what_message.c_str();
-        }
-
-    private:
-        std::string what_message = "";
+        explicit UcalManagerException(std::string const& s) : runtime_error(s) {};
     };
 
     /*!
