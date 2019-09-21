@@ -8,6 +8,7 @@
 #include <sstream>
 
 using namespace runtime;
+using std::move;
 
 
 MachineState StateMachine::getState() {
@@ -18,7 +19,7 @@ common::Config const& StateMachine::getConfig() {
     return state_->getConfig();
 }
 
-DummyPlan StateMachine::getPlan() {
+Plan const& StateMachine::getPlan() {
     return state_->getPlan();
 }
 
@@ -26,8 +27,8 @@ void StateMachine::setConfig(json const& json_cfg) {
     state_->setConfig(json_cfg);
 }
 
-void StateMachine::setPlan(DummyPlan const& new_plan) {
-    state_->setPlan(new_plan);
+void StateMachine::setPlan(Plan new_plan) {
+    state_->setPlan(move(new_plan));
     //dummyContext_.plan = new_plan;
 }
 
@@ -39,12 +40,12 @@ void StateMachine::stop() {
     state_->stop();
 }
 
-DummyContext& StateMachine::getContext() {
-    return dummyContext_;
+Context& StateMachine::getContext() {
+    return context_;
 }
 
 void StateMachine::setState(StatePtr new_state) {
-    state_ = std::move(new_state);
+    state_ = move(new_state);
 }
 
 template <MachineStateType S>
@@ -53,16 +54,6 @@ void GenericState<S>::throwError(const char* name) {
     message << "Cannot execute " << name << " from "
             << MachineState::_from_integral(S)._to_string();
     throw common::StateViolationError(message.str());
-}
-
-template <MachineStateType S>
-StatePtr stateGenerator (StateMachine* machine) {
-    return std::make_unique<GenericState<S>>(machine);
-}
-
-constexpr
-MachineState::_integral f (MachineState::_value_iterable iter) {
-    return iter.begin()->_value;
 }
 
 // THIS CODE IS FAKE AND MUST NOT BE EXECUTED
@@ -113,11 +104,11 @@ common::Config const& GenericState<S>::getConfig() {
     return *common::acquireConfig();
 }
 
-STATE_DEFAULT_THROW(DummyPlan, getPlan)
+STATE_DEFAULT_THROW(Plan const&, getPlan)
 
 STATE_DEFAULT_THROW(void, setConfig, json const&)
 
-STATE_DEFAULT_THROW(void, setPlan, DummyPlan const&)
+STATE_DEFAULT_THROW(void, setPlan, Plan)
 
 STATE_DEFAULT_THROW(void, runNext)
 
@@ -126,4 +117,51 @@ STATE_DEFAULT_THROW(void, stop)
 template <>
 common::Config const& GenericState<MachineState::NotReady>::getConfig() {
     throwError ("getConfig");
+}
+
+template <>
+Plan const& GenericState<MachineState::NoPlan>::getPlan() {
+    return machine_->getContext().plan;
+}
+
+template <>
+void GenericState<MachineState::NoPlan>::setPlan(Plan new_plan) {
+    if (!new_plan.empty()) {
+        machine_->getContext().plan = move(new_plan);
+        machine_->setState(createState<MachineState::HasPlan>(machine_));
+    }
+}
+
+template <>
+void GenericState<MachineState::HasPlan>::setPlan(Plan new_plan) {
+    auto& stored_plan = machine_->getContext().plan;
+    stored_plan = move(new_plan);
+    if (stored_plan.empty()) {
+        machine_->setState(createState<MachineState::NoPlan>(machine_));
+    }
+}
+
+template <>
+Plan const& GenericState<MachineState::HasPlan>::getPlan() {
+    return machine_->getContext().plan;
+}
+
+template <>
+void GenericState<MachineState::HasPlan>::runNext() {
+    auto& context = machine_->getContext();
+    //context.device->prepare();
+    //context.device->run();
+    machine_->setState(createState<MachineState::Executing>(machine_));
+}
+
+template <>
+Plan const& GenericState<MachineState::Executing>::getPlan() {
+    return machine_->getContext().plan; // TODO: cut alredy done blocks from plan
+}
+
+template <>
+void GenericState<MachineState::Executing>::stop() {
+    auto& context = machine_->getContext();
+    //context.device->stop();
+    machine_->setState(createState<MachineState::Executing>(machine_));
 }

@@ -5,18 +5,24 @@
 #ifndef UCAL_MANAGER_STATE_MACHINE_H
 #define UCAL_MANAGER_STATE_MACHINE_H
 
-#include <memory>
-#include <better_enums/enum.h>
+#include "block.h"
 #include <common/config.h>
+#include <device/device.h>
+#include <storage/storage.h>
+#include <better_enums/enum.h>
 #include <json/include/nlohmann/json_fwd.hpp>
+#include <memory>
 
 namespace runtime {
     using nlohmann::json;
+    using DevicePtr = std::unique_ptr<device::IDevice>;
     struct DummyPlan {
         bool valid;
     };
-    struct DummyContext {
-        DummyPlan plan;
+    struct Context {
+        Plan plan;
+        DevicePtr device;
+        storage::Storage storage;
     };
 
     using MachineStateType = unsigned;
@@ -30,13 +36,13 @@ namespace runtime {
 
         virtual common::Config const& getConfig() = 0; ///< returns read-only config reference
 
-        virtual DummyPlan getPlan() = 0;
+        virtual Plan const& getPlan() = 0;
 
         //virtual Data getData() = 0;
 
         virtual void setConfig(json const& json) = 0;
 
-        virtual void setPlan(DummyPlan const&) = 0;
+        virtual void setPlan(Plan) = 0; //!< We can move or copy here, so accept by value
 
         virtual void runNext() = 0;
 
@@ -49,7 +55,7 @@ namespace runtime {
     class StateMachine : public IState {
     private:
         StatePtr state_;
-        DummyContext dummyContext_;
+        Context context_;
 
     public:
         //void update() override;
@@ -58,19 +64,19 @@ namespace runtime {
 
         common::Config const& getConfig() override;
 
-        DummyPlan getPlan() override;
+        Plan const& getPlan() override;
 
         //Data getData() override;
 
         void setConfig(json const&) override;
 
-        void setPlan(DummyPlan const&) override;
+        void setPlan(Plan) override;
 
         void runNext() override;
 
         void stop() override;
 
-        DummyContext& getContext();
+        Context& getContext();
 
         void setState(StatePtr new_state);
     };
@@ -83,13 +89,13 @@ namespace runtime {
 
         common::Config const& getConfig() override;
 
-        DummyPlan getPlan() override;
+        Plan const& getPlan() override;
 
         /*Data getData() override;*/
 
         void setConfig(json const&) override;
 
-        void setPlan(DummyPlan const&) override;
+        void setPlan(Plan) override;
 
         void runNext() override;
 
