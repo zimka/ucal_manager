@@ -4,11 +4,13 @@
 #include <common/measures.h>
 #include <vector>
 #include <string>
+#include <json/include/nlohmann/json_fwd.hpp>
 
 namespace runtime {
 
     struct Block {
         // TODO: add conversion from json
+        Block() = default;
         Block(Block const& other) = default;
         Block& operator=(Block const& other) = default;
         Block(Block&& other) = default;
@@ -34,6 +36,10 @@ namespace runtime {
         std::vector<common::VoltUnit> mod;
     };
     using Plan = std::vector<Block>;
+
+    void to_json(nlohmann::json& j, Block const& b);
+    void from_json(nlohmann::json const& j, Block& b);
+
 }
 
 #endif //UCAL2_RUNTIME_BLOCK_H

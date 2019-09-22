@@ -9,4 +9,4 @@ set(SOURCES
 
 add_library(runtime ${HEADERS} ${SOURCES})
 target_link_libraries(runtime PUBLIC common device)
-target_include_directories(device PUBLIC .)
+target_include_directories(runtime PUBLIC .)

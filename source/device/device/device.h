@@ -58,7 +58,7 @@ namespace device {
 
         void stop() override;
 
-        virtual DeviceState getState() const override;
+        DeviceState getState() const override;
 
         storage::Frame getData() override;
 
