@@ -55,8 +55,9 @@ Context& StateMachine::getContext() {
     return context_;
 }
 
-void StateMachine::setState(StatePtr new_state) {
-    state_ = move(new_state);
+void StateMachine::setState(StatePtr& new_state) {
+    state_.swap(new_state);
+    //state_ = move(new_state);
 }
 
 template <MachineStateType S>
@@ -141,7 +142,8 @@ template <>
 void GenericState<MachineState::NoPlan>::setPlan(Plan new_plan) {
     if (!new_plan.empty()) {
         machine_->getContext().plan = move(new_plan);
-        machine_->setState(createState<MachineState::HasPlan>(machine_));
+        auto temp = createState<MachineState::HasPlan>(machine_);
+        machine_->setState(temp);
     }
 }
 
@@ -150,7 +152,8 @@ void GenericState<MachineState::HasPlan>::setPlan(Plan new_plan) {
     auto& stored_plan = machine_->getContext().plan;
     stored_plan = move(new_plan);
     if (stored_plan.empty()) {
-        machine_->setState(createState<MachineState::NoPlan>(machine_));
+        auto temp = createState<MachineState::NoPlan>(machine_);
+        machine_->setState(temp);
     }
 }
 
@@ -161,7 +164,8 @@ Plan const& GenericState<MachineState::HasPlan>::getPlan() {
 
 template <>
 void GenericState<MachineState::HasPlan>::runNext() {
-    machine_->setState(createState<MachineState::Executing>(machine_));
+    auto temp = createState<MachineState::Executing>(machine_);
+    machine_->setState(temp);
 }
 
 GenericState<MachineState::Executing>::GenericState(runtime::StateMachine* machine)
@@ -199,7 +203,8 @@ GenericState<MachineState::Executing>::GenericState(runtime::StateMachine* machi
     };
     callable(&machine_->getContext());
     //machine_->accessMonitor() = std::thread(callable, &machine_->getContext());
-    machine_->setState(createState<MachineState::HasPlan>(machine_));
+    auto temp = createState<MachineState::HasPlan>(machine_);
+    machine_->setState(temp);
 }
 
 void GenericState<MachineState::Executing>::throwError(const char* name) {
@@ -241,5 +246,6 @@ void GenericState<MachineState::Executing>::stop() {
     auto& context = machine_->getContext();
     context.device->stop();
     //machine_->accessMonitor().join();
-    machine_->setState(createState<MachineState::HasPlan>(machine_));
+    auto temp = createState<MachineState::HasPlan>(machine_);
+    machine_->setState(temp);
 }
