@@ -117,10 +117,10 @@ namespace runtime {
     private:
         StateMachine* machine_;
 
-        void throwError(const char* name);
+        //void throwError(const char* name);
     };
 
-    template <>
+    /*template <>
     class GenericState<MachineState::Executing> : public IState {
     public:
         GenericState() = default;
@@ -144,8 +144,8 @@ namespace runtime {
     private:
         StateMachine* machine_;
 
-        static void throwError(const char* name);
-    };
+        //static void throwError(const char* name);
+    };*/
 
     template <MachineStateType S>
     StatePtr createState(StateMachine* machine) {

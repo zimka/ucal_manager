@@ -59,13 +59,13 @@ void StateMachine::setState(StatePtr new_state) {
     state_ = move(new_state);
 }
 
-template <MachineStateType S>
+/*template <MachineStateType S>
 void GenericState<S>::throwError(const char* name) {
     std::stringstream message;
     message << "Cannot execute " << name << " from "
             << MachineState::_from_integral(S)._to_string();
     throw common::StateViolationError(message.str());
-}
+}*/
 
 // THIS CODE IS FAKE AND MUST NOT BE EXECUTED
 // IT'S SOLE PURPOSE IS TO INSTATIATE ALL NEEDED TEMPLATE VARIANTS IN COMPILE TIME
@@ -93,12 +93,20 @@ public:
 static int foo = GenRecursive<0>::exec();
 // END OF FAKE CODE
 
+#define THROW_ERROR(fname, S) \
+    std::stringstream message; \
+    message << "Cannot execute " << #fname << " from " \
+    << MachineState::_from_integral(S)._to_string(); \
+    throw common::StateViolationError(message.str());
+
 /*!
  * Defines member function that throws exception
  */
 #define STATE_DEFAULT_THROW(retv, fname, ...) \
 template <MachineStateType S> \
-retv GenericState<S>::fname(__VA_ARGS__) { throwError(#fname); }
+retv GenericState<S>::fname(__VA_ARGS__) { \
+    THROW_ERROR(fname, S); \
+}
 
 /*!
  * Returns state, same for all functions
@@ -129,7 +137,7 @@ STATE_DEFAULT_THROW(void, stop)
 
 template <>
 common::Config const& GenericState<MachineState::NotReady>::getConfig() {
-    throwError ("getConfig");
+    THROW_ERROR(getConfig, MachineState::NotReady);
 }
 
 template <>
@@ -164,7 +172,7 @@ void GenericState<MachineState::HasPlan>::runNext() {
     machine_->setState(createState<MachineState::Executing>(machine_));
 }
 
-GenericState<MachineState::Executing>::GenericState(runtime::StateMachine* machine)
+/*GenericState<MachineState::Executing>::GenericState(runtime::StateMachine* machine)
     :machine_(machine)
 {
     // Start monitoring
@@ -199,10 +207,10 @@ GenericState<MachineState::Executing>::GenericState(runtime::StateMachine* machi
     };
     callable(&machine_->getContext());
     //machine_->accessMonitor() = std::thread(callable, &machine_->getContext());
-    machine_->setState(createState<MachineState::HasPlan>(machine_));
-}
+    //machine_->setState(createState<MachineState::HasPlan>(machine_));
+}*/
 
-void GenericState<MachineState::Executing>::throwError(const char* name) {
+/*void GenericState<MachineState::Executing>::throwError(const char* name) {
     std::stringstream message;
     message << "Cannot execute " << name << " from "
             << MachineState::Executing;
@@ -215,31 +223,32 @@ MachineState GenericState<MachineState::Executing>::getState() {
 
 common::Config const& GenericState<MachineState::Executing>::getConfig() {
     return *common::acquireConfig();
-}
+}*/
 
+template <>
 Plan const& GenericState<MachineState::Executing>::getPlan() {
     return machine_->getContext().plan; // TODO: cut alredy done blocks from plan
 }
 
+template <>
 storage::Storage const& GenericState<MachineState::Executing>::getData() {
     return machine_->getContext().storage;
 }
 
-void GenericState<MachineState::Executing>::setConfig(json const&) {
-    throwError("setConfig");
+/*void GenericState<MachineState::Executing>::setConfig(json const&) {
+    THROW_ERROR(setConfig, MachineState::Executing)
 }
 
 void GenericState<MachineState::Executing>::setPlan(runtime::Plan) {
-    throwError("setPlan");
+    THROW_ERROR(setPlan, MachineState::Executing)
 }
 
 void GenericState<MachineState::Executing>::runNext() {
-    throwError("runNext");
-}
+    THROW_ERROR(runNext, MachineState::Executing)
+}*/
 
+template <>
 void GenericState<MachineState::Executing>::stop() {
     auto& context = machine_->getContext();
-    context.device->stop();
-    //machine_->accessMonitor().join();
     machine_->setState(createState<MachineState::HasPlan>(machine_));
 }
