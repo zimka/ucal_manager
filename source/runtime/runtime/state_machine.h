@@ -88,7 +88,7 @@ namespace runtime {
 
         Context& getContext();
 
-        void setState(StatePtr& new_state);
+        void setState(StatePtr new_state);
 
         //std::thread& accessMonitor() { return monitor_; }
     };
