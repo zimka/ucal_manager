@@ -8,6 +8,7 @@
 #include <common/utils.h>
 #include <device/timer.h>
 #include <device/device.h>
+#include <device/acquire.h>
 #include <storage/frame.h>
 
 using namespace device;
@@ -15,7 +16,7 @@ using namespace common;
 
 
 void testSleep(common::TimeUnit t) {
-    std::this_thread::sleep_for(std::chrono::milliseconds((int) t));
+    std::this_thread::sleep_for(std::chrono::milliseconds((int)t));
 }
 
 bool timeApproxSame(common::TimeUnit ts1, common::TimeUnit ts2, common::TimeUnit delta) {
@@ -44,7 +45,7 @@ TEST_CASE("DeviceTimer") {
         for (auto i = 0; i < 20; i++) {
             auto measured = timer.getStamp().value();
             auto target = i * sleep_duration;
-            bool correct_current = timeApproxSame(measured, target, td * sleep_ratio / 10);
+            bool correct_current = timeApproxSame(measured, target, td * sleep_ratio / 5);
             testSleep(target + sleep_duration - measured); // runtime correction
             if (correct) {
                 correct = correct && correct_current;

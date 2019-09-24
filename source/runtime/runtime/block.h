@@ -32,8 +32,8 @@ namespace runtime {
         uint32_t pattern_len_tu;
         uint32_t block_len_tu;
         double sampling_step_tu; ///< TimeUnit float
-        std::vector<common::VoltUnit> guard;
-        std::vector<common::VoltUnit> mod;
+        std::vector<common::MilliVolt> guard;
+        std::vector<common::MilliVolt> mod;
     };
     using Plan = std::vector<Block>;
 

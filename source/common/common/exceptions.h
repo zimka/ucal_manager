@@ -57,5 +57,14 @@ namespace common {
         explicit NotImplementedError(std::string const& s) :
                 UcalManagerException("Not implemented yet: " + s) {};
     };
+
+    /*!
+    * Device usage error 
+    */
+    class DeviceError : public UcalManagerException {
+    public:
+        explicit DeviceError(const std::string& message) :
+            UcalManagerException("DeviceError: " + message) {};
+    };
 }
 #endif //UCAL2_COMMON_EXCEPTIONS_H

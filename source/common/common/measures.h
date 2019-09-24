@@ -29,11 +29,9 @@ namespace common {
     */
     using TimeUnit = uint32_t;
 
-
-
     /*!
     * Voltage in millivoltage units
     */
-    using VoltUnit = int32_t;
+    using MilliVolt = int32_t;
 }
 #endif//UCAL2_COMMON_MEASURES_H
