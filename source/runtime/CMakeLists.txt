@@ -1,6 +1,7 @@
 set(HEADERS
     runtime/block.h
     runtime/state_machine.h
+    runtime/i_state.h
 )
 set(SOURCES
     runtime/block.cpp

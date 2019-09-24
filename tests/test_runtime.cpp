@@ -55,6 +55,7 @@ TEST_CASE("Block") {
 }
 
 TEST_CASE("StateMachine") {
+    using common::MachineState;
     Block block1 {
             10,
             10,

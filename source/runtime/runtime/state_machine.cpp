@@ -10,6 +10,8 @@
 
 using namespace runtime;
 using std::move;
+using common::MachineState;
+using common::MachineStateType;
 
 
 StateMachine::StateMachine(Context context)

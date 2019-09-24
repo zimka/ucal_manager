@@ -5,7 +5,7 @@
 #ifndef UCAL_MANAGER_STATE_MACHINE_H
 #define UCAL_MANAGER_STATE_MACHINE_H
 
-#include "block.h"
+#include "i_state.h"
 #include <common/config.h>
 #include <device/device.h>
 #include <storage/storage.h>
@@ -32,32 +32,7 @@ namespace runtime {
         {}*/
     };
 
-    using MachineStateType = unsigned;
-    BETTER_ENUM(MachineState, MachineStateType, NotReady, Error, NoPlan, HasPlan, Executing)
 
-    class IState {
-    public:
-        virtual void update() {}; // Does nothing, this is by design
-
-        virtual MachineState getState() = 0;
-
-        virtual common::Config const& getConfig() = 0; ///< returns read-only config reference
-
-        virtual Plan const& getPlan() = 0;
-
-        virtual storage::Storage const& getData() = 0;
-
-        virtual void setConfig(json const& json) = 0;
-
-        virtual void setPlan(Plan) = 0; //!< We can move or copy here, so accept by value
-
-        virtual void runNext() = 0;
-
-        virtual void stop() = 0;
-
-    };
-
-    using StatePtr = std::unique_ptr<IState>;
 
     class StateMachine : public IState {
     private:
@@ -70,7 +45,7 @@ namespace runtime {
         explicit StateMachine (Context context);
         //void update() override;
 
-        MachineState getState() override;
+        common::MachineState getState() override;
 
         common::Config const& getConfig() override;
 
@@ -93,12 +68,12 @@ namespace runtime {
         //std::thread& accessMonitor() { return monitor_; }
     };
 
-    template <MachineStateType S>
+    template <common::MachineStateType S>
     class GenericState : public IState {
     public:
         GenericState() = default;
         GenericState(StateMachine* machine) : machine_(machine) {}
-        MachineState getState() override;
+        common::MachineState getState() override;
 
         common::Config const& getConfig() override;
 
@@ -147,7 +122,7 @@ namespace runtime {
         //static void throwError(const char* name);
     };*/
 
-    template <MachineStateType S>
+    template <common::MachineStateType S>
     StatePtr createState(StateMachine* machine) {
         return std::make_unique<GenericState<S>>(machine);
     }
