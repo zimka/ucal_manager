@@ -14,7 +14,7 @@ endif ()
 
 add_subdirectory(source)
 add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} PUBLIC common storage device)
+target_link_libraries(${PROJECT_NAME} PUBLIC common storage device runtime)
 if (USE_REAL_DEVICE)
     target_compile_definitions(${PROJECT_NAME} PUBLIC REAL_DEVICE)
 endif()

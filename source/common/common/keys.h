@@ -29,5 +29,11 @@ namespace common {
     * Key to indentify double config field
     */
     BETTER_ENUM(ConfigDoubleKey, char, SamplingFreq, TimeUnitSize, Undefined);
+
+    /*!
+     * Keys for indexing Runtime states
+     */
+    using MachineStateType = unsigned;
+    BETTER_ENUM(MachineState, MachineStateType, NotReady, Error, NoPlan, HasPlan, Executing)
 }
 #endif//UCAL2_COMMON_KEYS_H

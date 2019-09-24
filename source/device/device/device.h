@@ -16,7 +16,7 @@ namespace device {
     using VoltageProfile = std::vector<common::MilliVolt>;
     using ProfileSetup = std::map<common::ControlKey, VoltageProfile>;
     BETTER_ENUM(DeviceState, char, CanSet, Prepared, Running);
-    constexpr static char* DEFAULT_DAQBOARD_NAME = "DaqBoard3001USB";
+    constexpr static const char* DEFAULT_DAQBOARD_NAME = "DaqBoard3001USB";
     constexpr double DEFAULT_DAQBOARD_SAMPLING_RATE_HZ = 50;
     constexpr uint32_t DEFAULT_DAQBOARD_BUFFER_SIZE_PER_HZ = 100;
     constexpr double VABSMAX = 10000.; //measured in mV
@@ -79,7 +79,7 @@ namespace device {
 
         void stop() override;
 
-        virtual DeviceState getState() const override;
+        DeviceState getState() const override;
 
         storage::Frame getData() override;
 

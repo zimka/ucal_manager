@@ -11,14 +11,7 @@ namespace common {
      */
     class UcalManagerException : public std::runtime_error {
     public:
-        explicit UcalManagerException(std::string const& s) : runtime_error(s), what_message(s) {};
-
-        virtual const char* what() noexcept {
-            return what_message.c_str();
-        }
-
-    private:
-        std::string what_message = "";
+        explicit UcalManagerException(std::string const& s) : runtime_error(s) {};
     };
 
     /*!
@@ -48,6 +41,15 @@ namespace common {
         explicit ValueError(std::string const& message) :
                 UcalManagerException("ValueError: " + message) {};
 
+    };
+
+    /*!
+     * Client command cannot be executed in current state
+     */
+    class StateViolationError : public UcalManagerException {
+    public:
+        explicit StateViolationError(std::string const& message) :
+                UcalManagerException("StateViolationErrror: " + message) {};
     };
 
     class NotImplementedError : public UcalManagerException {
