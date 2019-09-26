@@ -7,3 +7,6 @@
 [submodule "third_party/better_enums"]
 	path = third_party/better_enums
 	url = https://github.com/aantron/better-enums
+[submodule "third_party/readerwriterqueue"]
+	path = third_party/readerwriterqueue
+	url = https://github.com/cameron314/readerwriterqueue.git
