@@ -37,6 +37,7 @@ namespace runtime {
     class StateMachine : public IState {
     private:
         StatePtr state_;
+        StatePtr core_;
         Context context_;
         //std::thread monitor_;
 
@@ -64,6 +65,8 @@ namespace runtime {
         Context& getContext();
 
         void setState(StatePtr new_state);
+
+        StatePtr const& accessCore() { return core_; }
 
         //std::thread& accessMonitor() { return monitor_; }
     };
