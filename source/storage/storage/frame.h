@@ -26,6 +26,8 @@ namespace storage {
 
         Frame(Frame&& other) noexcept;
 
+        Frame& operator=(Frame&& other) = default;
+
         Frame(Frame const& other) = delete;
 
         KeyArray keys() const;

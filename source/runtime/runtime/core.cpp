@@ -144,7 +144,6 @@ void CoreState::validatePlan(Plan plan) {
 }
 
 void CoreState::update() {
-    /*
     while (data_queue_.peek() != nullptr) {
         storage::Frame frame;
         bool status = data_queue_.try_dequeue(frame);
@@ -152,7 +151,6 @@ void CoreState::update() {
             storage_.append(std::move(frame));
         }
     }
-    */
 }
 
 Worker::Worker(std::atomic<int8_t>* master_block_ind, CoreState::FrameQueue * queue, Plan plan): global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {
