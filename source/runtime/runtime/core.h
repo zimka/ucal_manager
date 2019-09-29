@@ -3,6 +3,7 @@
 #include "i_state.h"
 #include "block.h"
 #include <device/device.h>
+#include <device/acquire.h>
 #include <readerwriterqueue/readerwriterqueue.h>
 #include <thread>
 #include <atomic>
@@ -14,6 +15,8 @@ namespace runtime {
     Must be used inside state machine only, otherwise is heavily unsafe.
     Uses separate thread to load data from device.
     */
+    using FrameQueue = moodycamel::ReaderWriterQueue<storage::Frame>;
+
     class CoreState : public IState {
     public:
         common::MachineState getState() override;
@@ -32,8 +35,6 @@ namespace runtime {
 
         void stop() override;
 
-        using FrameQueue = moodycamel::ReaderWriterQueue<storage::Frame>;
-
     private:
         std::atomic<int8_t> current_block_ind_ = -1;
         FrameQueue data_queue_;
@@ -42,17 +43,16 @@ namespace runtime {
         std::thread worker_thread_;
 
         void update();
-        void validatePlan(Plan plan);
     };
 
     class Worker {
     public:
-        Worker(std::atomic<int8_t>* master_block_ind, CoreState::FrameQueue* queue, Plan plan);
+        Worker(std::atomic<int8_t>* master_block_ind, FrameQueue* queue, Plan plan);
         void doStep(); 
         bool finished();
     private:
         Plan plan_;
-        CoreState::FrameQueue* queue_;
+        FrameQueue* queue_;
         std::atomic<int8_t>* global_block_ind_;
         int8_t worker_block_ind_;
         std::unique_ptr<device::IDevice> device_;

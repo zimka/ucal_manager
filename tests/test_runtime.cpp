@@ -4,9 +4,20 @@
 
 #include <runtime/block.h>
 #include <runtime/state_machine.h>
+#include <runtime/core.h>
 #include <catch2/catch.hpp>
 
 using namespace runtime;
+
+static void testSleep(common::TimeUnit t) {
+    std::this_thread::sleep_for(std::chrono::milliseconds((int)t));
+}
+
+static void flushQueue(runtime::FrameQueue* queue) {
+    while (queue->peek() != nullptr) {
+        queue->pop();
+    }
+}
 
 TEST_CASE("Block") {
     SECTION("Creation") {
@@ -144,5 +155,86 @@ TEST_CASE("StateMachine") {
         // TODO: complex behaviour: run next block, if current block is infinite, else throw exception
         //REQUIRE_NOTHROW((machine.runNext(), machine.getState()._value == MachineState::Executing));
         REQUIRE_NOTHROW(machine.stop());
+    }
+}
+
+
+TEST_CASE("Worker") {
+    auto queue = FrameQueue();
+    std::atomic<int8_t> index = -1;
+    runtime::Block inf_block {
+            100,
+            0,
+            1.5,
+            {10, 20, 30, 40,},
+            {110, 120, 130, 140,},
+    };
+    runtime::Block short_block {
+        1,
+        10,
+        1.5,
+        {10, 20, 30, 40,},
+        {110, 120, 130, 140,},
+    };
+    auto plan = runtime::Plan({inf_block, short_block});
+
+    SECTION("Init turned off") {
+        auto w = Worker(&index, &queue, plan);
+        REQUIRE(w.finished());
+        REQUIRE(queue.peek() == nullptr);
+        w.doStep();
+        REQUIRE(queue.peek() == nullptr);
+    }
+
+    SECTION("Init turned on") {
+        index = 0;
+        auto w = Worker(&index, &queue, plan);
+        REQUIRE(!w.finished());
+        REQUIRE(queue.peek() == nullptr);
+        w.doStep();
+        REQUIRE(queue.peek() == nullptr);
+        testSleep(100);
+        w.doStep();
+        REQUIRE(queue.peek() != nullptr);
+        REQUIRE(!w.finished());
+    }
+
+    SECTION("Master stop") {
+        index = 0;
+        auto w = Worker(&index, &queue, plan);
+        w.doStep(); 
+        testSleep(100);
+        w.doStep();
+        REQUIRE(!w.finished());
+        REQUIRE(queue.peek() != nullptr);
+        flushQueue(&queue);
+        REQUIRE(queue.peek() == nullptr);
+        index = -1;
+        w.doStep();
+        w.doStep();
+        REQUIRE(queue.peek() == nullptr);
+        REQUIRE(w.finished());
+    }
+    SECTION("Infinite block") {
+        index = 0;
+        auto w = Worker(&index, &queue, {inf_block});
+        for (auto i = 0; i < 50; i++) {
+            w.doStep();
+            testSleep(200);
+            REQUIRE(!w.finished());
+        }
+    }
+    SECTION("Short block") {
+        index = 0;
+        auto w = Worker(&index, &queue, {short_block});
+        int i = 0;
+        for (i = 0; i < 50; i++) {
+            w.doStep();
+            testSleep(200);
+            if (w.finished()) {
+                break;
+            }
+        }
+        REQUIRE(i<=2);
     }
 }

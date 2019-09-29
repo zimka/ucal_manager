@@ -1,5 +1,4 @@
 #include "core.h"
-#include <device/acquire.h>
 #include <common/exceptions.h>
 
 using namespace runtime;
@@ -17,6 +16,13 @@ void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
             }, block.pattern_len_tu);
     }
     device->prepare();
+}
+
+void validatePlan(Plan plan) {
+    auto device = device::acquireDevice();
+    for (auto block : plan) {
+        loadBlock(device, block);
+    }
 }
 
 common::MachineState CoreState::getState() {
@@ -125,7 +131,7 @@ void CoreState::runNext() {
     }
     current_block_ind_ = 0;
     worker_thread_ = std::thread(
-        [](std::atomic<int8_t>* master_block_ind, CoreState::FrameQueue* queue, Plan plan) {
+        [](std::atomic<int8_t>* master_block_ind, FrameQueue* queue, Plan plan) {
             auto worker = Worker(master_block_ind, queue, plan);
             while (!worker.finished()) {
                 // TODO: some sleep?
@@ -134,13 +140,6 @@ void CoreState::runNext() {
         },
         &current_block_ind_, &data_queue_, plan_
     );
-}
-
-void CoreState::validatePlan(Plan plan) {
-    auto device = device::acquireDevice();
-    for (auto block : plan) {
-        loadBlock(device, block);
-    }
 }
 
 void CoreState::update() {
@@ -153,7 +152,7 @@ void CoreState::update() {
     }
 }
 
-Worker::Worker(std::atomic<int8_t>* master_block_ind, CoreState::FrameQueue * queue, Plan plan): global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {
+Worker::Worker(std::atomic<int8_t>* master_block_ind, FrameQueue * queue, Plan plan): global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {
     device_ = device::acquireDevice();
     worker_block_ind_ = -1;
 }

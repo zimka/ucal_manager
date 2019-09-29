@@ -15,7 +15,7 @@ using namespace device;
 using namespace common;
 
 
-void testSleep(common::TimeUnit t) {
+static void testSleep(common::TimeUnit t) {
     std::this_thread::sleep_for(std::chrono::milliseconds((int)t));
 }
 
