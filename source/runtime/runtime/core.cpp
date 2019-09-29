@@ -163,7 +163,7 @@ void Worker::doStep() {
     }
     //fix value at given step
     int8_t master_block_ind = global_block_ind_->load();
-    bool is_sync = (master_block_ind) == worker_block_ind_;
+    bool is_sync = (master_block_ind == worker_block_ind_); // TODO: some kind of magic -- can be reordering
     bool is_running = (device_->getState() == +device::DeviceState::Running);
     if ((is_sync) && (is_running)) {
         // Sync: worker is synced with master and device running
@@ -179,7 +179,7 @@ void Worker::doStep() {
         if (master_block_ind < 0) {
             return;
         }
-        loadBlock(device_, plan_[master_block_ind]);
+        loadBlock(device_, plan_.at(master_block_ind));
         device_->run();
         worker_block_ind_ = master_block_ind;
     }
