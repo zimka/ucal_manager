@@ -12,6 +12,6 @@ namespace device {
     #else
     return std::make_unique<MockDevice>();
     #endif
-	}
+    }
 }
 #endif//UCAL2_DEVICE_ACQUIRE_H

@@ -3,6 +3,7 @@
 //
 
 #include "state_machine.h"
+#include "core.h"
 #include <common/exceptions.h>
 
 #include <sstream>
@@ -14,8 +15,13 @@ using common::MachineState;
 using common::MachineStateType;
 
 
+StateMachine::StateMachine()
+    : core_(std::make_unique<CoreState>())
+{}
+
 StateMachine::StateMachine(Context context)
     : context_(move(context))
+    , core_(std::make_unique<CoreState>())
 {
     state_ = createState<MachineState::NoPlan>(this);
 }
@@ -224,6 +230,11 @@ common::Config const& GenericState<MachineState::Executing>::getConfig() {
 template <>
 Plan const& GenericState<MachineState::Executing>::getPlan() {
     return machine_->accessCore()->getPlan(); // TODO: cut alredy done blocks from plan
+}
+
+template <>
+void GenericState<MachineState::Executing>::runNext() {
+    return machine_->accessCore()->runNext();
 }
 
 template <>

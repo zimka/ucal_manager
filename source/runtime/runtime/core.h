@@ -36,7 +36,7 @@ namespace runtime {
         void stop() override;
 
     private:
-        std::atomic<int8_t> current_block_ind_ = -1;
+        std::atomic<int8_t> current_block_ind_ {-1};
         FrameQueue data_queue_;
         storage::Storage storage_;
         Plan plan_;

@@ -42,7 +42,7 @@ namespace runtime {
         //std::thread monitor_;
 
     public:
-        StateMachine () = default;
+        StateMachine ();
         explicit StateMachine (Context context);
         //void update() override;
 

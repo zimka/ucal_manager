@@ -70,7 +70,7 @@ TEST_CASE("StateMachine") {
     Block block1 {
             10,
             10,
-            1.5,
+            1,
             {10, 20, 30, 40,},
             {110, 120, 130, 140,},
     };
@@ -161,7 +161,7 @@ TEST_CASE("StateMachine") {
 
 TEST_CASE("Worker") {
     auto queue = FrameQueue();
-    std::atomic<int8_t> index = -1;
+    std::atomic<int8_t> index {-1};
     runtime::Block inf_block {
             100,
             0,

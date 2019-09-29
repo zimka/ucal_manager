@@ -103,7 +103,7 @@ void CoreState::setConfig(json const& json_data){
 };
 
 void CoreState::stop() {
-    current_block_ind_ = -1;
+    current_block_ind_.store(-1);
     if (worker_thread_.joinable()) {
         // Waiting for worker thread to finish
         worker_thread_.join();
@@ -114,22 +114,22 @@ void CoreState::stop() {
 
 void CoreState::runNext() {
     // if already running
-    if (current_block_ind_ >= 0) {
+    auto local_block_index = current_block_ind_.load();
+    if (local_block_index >= 0) {
         if (!(worker_thread_.joinable())) {
             // TODO: restart thread?
             throw common::AssertionError("Worker thread have died");
         }
-        if ((plan_.size() - current_block_ind_) > 1) {
+        if ((plan_.size() - local_block_index) > 1) {
             // There is at least one block in plan
-            current_block_ind_++;
+            current_block_ind_.fetch_add(1); // Atomic increment
         }
         else {
-            current_block_ind_ = -1;
+            current_block_ind_.store(-1);
             // TODO: join thread?
         }
-        return;
     }
-    current_block_ind_ = 0;
+    current_block_ind_.store(0);
     worker_thread_ = std::thread(
         [](std::atomic<int8_t>* master_block_ind, FrameQueue* queue, Plan plan) {
             auto worker = Worker(master_block_ind, queue, plan);
@@ -162,7 +162,7 @@ void Worker::doStep() {
         return;
     }
     //fix value at given step
-    int8_t master_block_ind = *global_block_ind_;
+    int8_t master_block_ind = global_block_ind_->load();
     bool is_sync = (master_block_ind) == worker_block_ind_;
     bool is_running = (device_->getState() == +device::DeviceState::Running);
     if ((is_sync) && (is_running)) {
@@ -193,18 +193,15 @@ void Worker::doStep() {
         //then: move forward master index, becomes Ready
         if ((worker_block_ind_ + 1) < plan_.size()) {
             // run next block if can
-            *global_block_ind_ = worker_block_ind_ + 1;
+            global_block_ind_->store(worker_block_ind_ + 1);
         }
         else {
             // finish execution
-            *global_block_ind_ = -1;
+            global_block_ind_->store(-1);
         }
     }
 };
 
 bool Worker::finished() {
-    if ((*global_block_ind_) == -1) {
-        return true;
-    }
-    return false;
+    return global_block_ind_->load() == -1;
 }
