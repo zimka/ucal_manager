@@ -191,6 +191,13 @@ TEST_CASE("Frame") {
         REQUIRE(f2.size() == sd.size());
         REQUIRE_FALSE(f1.hasKey(k1));
         REQUIRE(f2.hasKey(k1));
+
+        Frame f3(ts0);
+        f3 = std::move(f2);
+        REQUIRE(f3.getTs() == ts1);
+        REQUIRE(f3.size() == sd.size());
+        REQUIRE(f3.hasKey(k1));
+        REQUIRE(f3.hasKey(k1));
     }
     SECTION("Attachment") {
         Frame f1(ts2);

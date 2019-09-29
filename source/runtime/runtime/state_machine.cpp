@@ -3,6 +3,7 @@
 //
 
 #include "state_machine.h"
+#include "core.h"
 #include <common/exceptions.h>
 
 #include <sstream>
@@ -14,8 +15,13 @@ using common::MachineState;
 using common::MachineStateType;
 
 
+StateMachine::StateMachine()
+    : core_(std::make_unique<CoreState>())
+{}
+
 StateMachine::StateMachine(Context context)
     : context_(move(context))
+    , core_(std::make_unique<CoreState>())
 {
     state_ = createState<MachineState::NoPlan>(this);
 }
@@ -70,7 +76,7 @@ void GenericState<S>::throwError(const char* name) {
 }*/
 
 // THIS CODE IS FAKE AND MUST NOT BE EXECUTED
-// IT'S SOLE PURPOSE IS TO INSTATIATE ALL NEEDED TEMPLATE VARIANTS IN COMPILE TIME
+// IT'S SOLE PURPOSE IS TO INSTANTIATE ALL NEEDED TEMPLATE VARIANTS IN COMPILE TIME
 template <size_t _idx>
 class GenRecursive {
 public:
@@ -122,7 +128,7 @@ MachineState GenericState<S>::getState() {
 
 template <MachineStateType S>
 common::Config const& GenericState<S>::getConfig() {
-    return *common::acquireConfig();
+    return machine_->accessCore()->getConfig();
 }
 
 STATE_DEFAULT_THROW(Plan const&, getPlan)
@@ -144,33 +150,36 @@ common::Config const& GenericState<MachineState::NotReady>::getConfig() {
 
 template <>
 Plan const& GenericState<MachineState::NoPlan>::getPlan() {
-    return machine_->getContext().plan;
+    return machine_->accessCore()->getPlan();
 }
 
 template <>
 void GenericState<MachineState::NoPlan>::setPlan(Plan new_plan) {
-    if (!new_plan.empty()) {
-        machine_->getContext().plan = move(new_plan);
+    if(!new_plan.empty())
+    {
+        machine_->accessCore()->setPlan(move(new_plan));
         machine_->setState(createState<MachineState::HasPlan>(machine_));
     }
 }
 
 template <>
 void GenericState<MachineState::HasPlan>::setPlan(Plan new_plan) {
-    auto& stored_plan = machine_->getContext().plan;
-    stored_plan = move(new_plan);
-    if (stored_plan.empty()) {
+    bool empty = new_plan.empty();
+    machine_->accessCore()->setPlan(move(new_plan));
+    if(empty)
+    {
         machine_->setState(createState<MachineState::NoPlan>(machine_));
     }
 }
 
 template <>
 Plan const& GenericState<MachineState::HasPlan>::getPlan() {
-    return machine_->getContext().plan;
+    return machine_->accessCore()->getPlan();
 }
 
 template <>
 void GenericState<MachineState::HasPlan>::runNext() {
+    machine_->accessCore()->runNext();
     machine_->setState(createState<MachineState::Executing>(machine_));
 }
 
@@ -229,12 +238,17 @@ common::Config const& GenericState<MachineState::Executing>::getConfig() {
 
 template <>
 Plan const& GenericState<MachineState::Executing>::getPlan() {
-    return machine_->getContext().plan; // TODO: cut alredy done blocks from plan
+    return machine_->accessCore()->getPlan(); // TODO: cut alredy done blocks from plan
+}
+
+template <>
+void GenericState<MachineState::Executing>::runNext() {
+    return machine_->accessCore()->runNext();
 }
 
 template <>
 storage::Storage const& GenericState<MachineState::Executing>::getData() {
-    return machine_->getContext().storage;
+    return machine_->accessCore()->getData();
 }
 
 /*void GenericState<MachineState::Executing>::setConfig(json const&) {
@@ -251,6 +265,6 @@ void GenericState<MachineState::Executing>::runNext() {
 
 template <>
 void GenericState<MachineState::Executing>::stop() {
-    auto& context = machine_->getContext();
+    machine_->accessCore()->stop();
     machine_->setState(createState<MachineState::HasPlan>(machine_));
 }
