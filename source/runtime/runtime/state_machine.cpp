@@ -155,12 +155,21 @@ Plan const& GenericState<MachineState::NoPlan>::getPlan() {
 
 template <>
 void GenericState<MachineState::NoPlan>::setPlan(Plan new_plan) {
-    machine_->accessCore()->setPlan(move(new_plan));
+    if(!new_plan.empty())
+    {
+        machine_->accessCore()->setPlan(move(new_plan));
+        machine_->setState(createState<MachineState::HasPlan>(machine_));
+    }
 }
 
 template <>
 void GenericState<MachineState::HasPlan>::setPlan(Plan new_plan) {
+    bool empty = new_plan.empty();
     machine_->accessCore()->setPlan(move(new_plan));
+    if(empty)
+    {
+        machine_->setState(createState<MachineState::NoPlan>(machine_));
+    }
 }
 
 template <>
