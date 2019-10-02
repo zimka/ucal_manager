@@ -75,7 +75,9 @@ storage::Frame MockDevice::getData() {
     storage::SignalData sd(&*values.begin(), len);
     storage::Frame f(ts);
     for (common::SignalKey k : common::SignalKey::_values()) {
-        f[k] = sd;
+        if ( k != +common::SignalKey::Undefined){
+            f[k] = sd;
+        }
     }
     returned_points_ += f.size();
     return std::move(f);
