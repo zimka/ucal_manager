@@ -135,6 +135,8 @@ void storage::to_json(json& j, Frame const& f) {
         SignalData const& v = f[k];
         j[k._to_string()] = json::parse(v.repr());
     }
+    auto ts = f.getTs();
+    j["Timestamp"] = {ts.step, ts.count};
 }
 
 std::string Frame::repr() const {
