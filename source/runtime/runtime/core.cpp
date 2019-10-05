@@ -22,6 +22,7 @@ void validatePlan(Plan plan) {
     auto device = device::acquireDevice();
     for (auto block : plan) {
         loadBlock(device, block);
+        device->stop();
     }
 }
 
@@ -150,6 +151,7 @@ void CoreState::update() {
             storage_.append(std::move(frame));
         }
     }
+
 }
 
 Worker::Worker(std::atomic<int8_t>* master_block_ind, FrameQueue * queue, Plan plan): global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {

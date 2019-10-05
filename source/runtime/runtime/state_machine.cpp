@@ -19,13 +19,6 @@ StateMachine::StateMachine()
     : core_(std::make_unique<CoreState>())
 {}
 
-StateMachine::StateMachine(Context context)
-    : context_(move(context))
-    , core_(std::make_unique<CoreState>())
-{
-    state_ = createState<MachineState::NoPlan>(this);
-}
-
 MachineState StateMachine::getState() {
     return state_->getState();
 }
@@ -59,21 +52,13 @@ void StateMachine::stop() {
     state_->stop();
 }
 
-Context& StateMachine::getContext() {
-    return context_;
-}
-
 void StateMachine::setState(StatePtr new_state) {
     state_ = move(new_state);
 }
 
-/*template <MachineStateType S>
-void GenericState<S>::throwError(const char* name) {
-    std::stringstream message;
-    message << "Cannot execute " << name << " from "
-            << MachineState::_from_integral(S)._to_string();
-    throw common::StateViolationError(message.str());
-}*/
+StatePtr& StateMachine::accessCore() {
+    return core_;
+}
 
 // THIS CODE IS FAKE AND MUST NOT BE EXECUTED
 // IT'S SOLE PURPOSE IS TO INSTANTIATE ALL NEEDED TEMPLATE VARIANTS IN COMPILE TIME
@@ -154,10 +139,15 @@ Plan const& GenericState<MachineState::NoPlan>::getPlan() {
 }
 
 template <>
+void GenericState<MachineState::NoPlan>::setConfig(json const& data) {
+    return machine_->accessCore()->setPlan(data);
+}
+
+template <>
 void GenericState<MachineState::NoPlan>::setPlan(Plan new_plan) {
     if(!new_plan.empty())
     {
-        machine_->accessCore()->setPlan(move(new_plan));
+        machine_->accessCore()->setPlan(new_plan);
         machine_->setState(createState<MachineState::HasPlan>(machine_));
     }
 }
@@ -183,59 +173,6 @@ void GenericState<MachineState::HasPlan>::runNext() {
     machine_->setState(createState<MachineState::Executing>(machine_));
 }
 
-/*GenericState<MachineState::Executing>::GenericState(runtime::StateMachine* machine)
-    :machine_(machine)
-{
-    // Start monitoring
-    auto callable = [] (Context* context) {
-        using common::ControlKey;
-        auto& device = context->device;
-        auto& plan = context->plan;
-        auto p_start = plan.begin();
-        auto p_end = plan.end();
-        //std::rotate(plan.begin(), plan.begin() + 1, plan.end());
-        auto p_block = p_start;
-        while (p_block != p_end) {
-            device->setProfiles(
-                    {
-                            {ControlKey::Vg, p_block->guard},
-                            {ControlKey::Vm, p_block->mod},
-                    },
-                    p_block->pattern_len_tu
-            );
-            device->setDuration(p_block->block_len_tu);
-            device->setReadingSampling(p_block->sampling_step_tu, 1);
-            device->prepare();
-            device->run();
-            std::this_thread::sleep_for(std::chrono::milliseconds(p_block->block_len_tu));
-            context->storage.append(device->getData());
-            if(device->getState() == +device::DeviceState::CanSet) {
-                throw common::StateViolationError ("Device must be in CanSet after all data was extracted");
-            }
-            p_block++;
-        }
-        context->storage.finalize();
-    };
-    callable(&machine_->getContext());
-    //machine_->accessMonitor() = std::thread(callable, &machine_->getContext());
-    //machine_->setState(createState<MachineState::HasPlan>(machine_));
-}*/
-
-/*void GenericState<MachineState::Executing>::throwError(const char* name) {
-    std::stringstream message;
-    message << "Cannot execute " << name << " from "
-            << MachineState::Executing;
-    throw common::StateViolationError(message.str());
-}
-
-MachineState GenericState<MachineState::Executing>::getState() {
-    return MachineState::Executing;
-}
-
-common::Config const& GenericState<MachineState::Executing>::getConfig() {
-    return *common::acquireConfig();
-}*/
-
 template <>
 Plan const& GenericState<MachineState::Executing>::getPlan() {
     return machine_->accessCore()->getPlan(); // TODO: cut alredy done blocks from plan
@@ -251,17 +188,10 @@ storage::Storage const& GenericState<MachineState::Executing>::getData() {
     return machine_->accessCore()->getData();
 }
 
-/*void GenericState<MachineState::Executing>::setConfig(json const&) {
-    THROW_ERROR(setConfig, MachineState::Executing)
+template <>
+storage::Storage const& GenericState<MachineState::HasPlan>::getData() {
+    return machine_->accessCore()->getData();
 }
-
-void GenericState<MachineState::Executing>::setPlan(runtime::Plan) {
-    THROW_ERROR(setPlan, MachineState::Executing)
-}
-
-void GenericState<MachineState::Executing>::runNext() {
-    THROW_ERROR(runNext, MachineState::Executing)
-}*/
 
 template <>
 void GenericState<MachineState::Executing>::stop() {

@@ -87,6 +87,7 @@ std::string DaqboardDevice::getSetup() const {
 
 void DaqboardDevice::prepare() {
     checkState({DeviceState::CanSet});
+    timer_.setStep(common::TimeUnit(1000/sampling_frequency_hz_));
     prepareDeviceRead();
     prepareDeviceWrite();
     state_ = DeviceState::Prepared;
@@ -241,6 +242,9 @@ void DaqboardDevice::prepareChannelWrite(common::ControlKey key) {
  *  9. Terminate by daq daqDacWaveDisarm
  */
     auto& buffer = profiles_.at(key);
+    if (!buffer.size()) {
+        throw common::DeviceError("Empty control channel was set to device - it is forbidden!");
+    }
     WORD channel_number = getControlChannelId(key);
     // 1.
     daqDacSetOutputMode(handle_, DddtLocal, channel_number, DdomStaticWave);
