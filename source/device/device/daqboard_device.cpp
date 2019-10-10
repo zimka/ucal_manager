@@ -221,11 +221,11 @@ void DaqboardDevice::prepareDeviceRead() {
     auto inner_buffer_size = (unsigned int)(sampling_frequency_hz_ * DAQBOARD_SIGNALS_NUMBER * getBufferSizePerHz());
     daqAdcTransferSetBuffer(handle_, NULL, inner_buffer_size, DatmUpdateBlock | DatmDriverBuf);
     //5.Arming the Acquisition and Starting the Transfer
+    daqAdcTransferStart(handle_);
     err = daqAdcArm(handle_);
     if (err) {
         throw common::DeviceError("Daqboard Error arming ADC, error code: " + std::to_string(err));
     }
-    daqAdcTransferStart(handle_);
 }
 
 void DaqboardDevice::prepareChannelWrite(common::ControlKey key) {
@@ -339,6 +339,7 @@ void device::DaqboardDevice::startDevice() {
 
 void device::DaqboardDevice::stopDevice() {
     daqDacWaveDisarm(handle_, DddtLocal);
+    daqAdcTransferStop(handle_);
     daqAdcDisarm(handle_);
     setChannelsToZero();
 }

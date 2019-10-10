@@ -47,6 +47,8 @@ namespace runtime {
         void setState(StatePtr new_state);
 
         StatePtr& accessCore();
+
+        virtual ~StateMachine() = default;
     };
 
     template <common::MachineStateType S>

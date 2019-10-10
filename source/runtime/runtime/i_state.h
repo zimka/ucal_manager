@@ -33,6 +33,8 @@ namespace runtime {
         virtual void runNext() = 0;
 
         virtual void stop() = 0;
+
+        virtual ~IState() = default;
     };
 
     using StatePtr = std::unique_ptr<IState>;

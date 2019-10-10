@@ -19,6 +19,8 @@ namespace runtime {
 
     class CoreState : public IState {
     public:
+        virtual ~CoreState();
+
         common::MachineState getState() override;
 
         common::Config const& getConfig() override; 
@@ -34,6 +36,8 @@ namespace runtime {
         void runNext() override;
 
         void stop() override;
+
+        bool isRunning();
 
     private:
         std::atomic<int8_t> current_block_ind_ {-1};
