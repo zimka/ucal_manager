@@ -19,8 +19,7 @@ namespace runtime {
 
     class CoreState : public IState {
     public:
-        virtual ~CoreState();
-
+        ~CoreState() override;
         common::MachineState getState() override;
 
         common::Config const& getConfig() override; 

@@ -3,6 +3,10 @@
 
 using namespace runtime;
 
+CoreState::~CoreState() {
+    stop();
+}
+
 void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
     device->setReadingSampling(block.sampling_step_tu);
 
@@ -86,15 +90,15 @@ void CoreState::setConfig(json const& json_data){
                 set_value = true;
             }
 
-if (common::ConfigStringKey::_is_valid(it.key().c_str())) {
-    auto typed_key = common::ConfigStringKey::_from_string(it.key().c_str());
-    std::string value = it.value().get<std::string>();
-    bool status = config->write(typed_key, value);
-    if (!(status)) {
-        throw common::ValueError(error_msg);
-    }
-    set_value = true;
-}
+            if (common::ConfigStringKey::_is_valid(it.key().c_str())) {
+                auto typed_key = common::ConfigStringKey::_from_string(it.key().c_str());
+                std::string value = it.value().get<std::string>();
+                bool status = config->write(typed_key, value);
+                if (!(status)) {
+                    throw common::ValueError(error_msg);
+                }
+                set_value = true;
+            }
         } catch (json::type_error) {
             //will throw in next line if failed to set value for any reason
         }
@@ -140,18 +144,18 @@ void CoreState::runNext() {
         current_block_ind_.store(0);
         worker_thread_ = std::thread(
             [](std::atomic<int8_t>* master_block_ind, FrameQueue* queue, Plan plan) {
-            try {
-                auto worker = Worker(master_block_ind, queue, plan);
-                while (!worker.finished()) {
-                    // TODO: some sleep?
-                    worker.doStep();
+                try {
+                    auto worker = Worker(master_block_ind, queue, plan);
+                    while (!worker.finished()) {
+                        // TODO: some sleep?
+                        worker.doStep();
+                    }
+                } catch (common::UcalManagerException& exc) {
                 }
-            } catch (common::UcalManagerException& exc) {
-            }
 
-        },
+            },
             &current_block_ind_, &data_queue_, plan_
-            );
+        );
     }
 }
 

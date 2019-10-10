@@ -25,8 +25,13 @@ namespace runtime {
 
     public:
         StateMachine ();
+        ~StateMachine() override = default;
         
         StateMachine(StateMachine const& other) = delete;
+        StateMachine& operator=(StateMachine const& other) = delete;
+
+        StateMachine(StateMachine&& other) = default;
+        StateMachine& operator=(StateMachine&& other) = default;
 
         common::MachineState getState() override;
 
@@ -55,7 +60,8 @@ namespace runtime {
     class GenericState : public IState {
     public:
         GenericState() = default;
-        GenericState(StateMachine* machine) : machine_(machine) {}
+        explicit GenericState(StateMachine* machine) : machine_(machine) {}
+        ~GenericState() override = default;
         common::MachineState getState() override;
 
         common::Config const& getConfig() override;

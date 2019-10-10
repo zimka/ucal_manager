@@ -28,7 +28,7 @@ runtime::Plan readPlan(std::string filename) {
 common::TimeStamp dumpData(storage::Storage const& str, common::TimeStamp start_ts) {
     json output;
     common::TimeStamp last_ts(0, 0);
-    for (auto& it=str.afterTs(start_ts); it!=str.end(); it++) {
+    for (auto it=str.afterTs(start_ts); it!=str.end(); it++) {
         output.push_back(it->repr());
         last_ts = it->getTs();
     }
@@ -98,6 +98,26 @@ int device_run() {
     }
     dumpData(store, common::TimeStamp(0, 0));
     return 1;
+}
+
+int main_test() {
+    runtime::StateMachine machine;
+    runtime::Block block1 {
+            10,
+            10,
+            1,
+            {10, 20, 30, 40,},
+            {110, 120, 130, 140,},
+    };
+    runtime::Plan non_empty = { block1 };
+    using common::MachineState;
+    machine.setState(runtime::createState<MachineState::NoPlan>(&machine));
+    machine.setPlan(non_empty);
+    machine.getState()._value == MachineState::HasPlan;
+    machine.runNext();
+    machine.getState()._value == MachineState::Executing;
+    machine.stop();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 int worker_run() {

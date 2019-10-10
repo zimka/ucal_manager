@@ -16,6 +16,7 @@
 namespace runtime {
     class IState {
     public:
+        virtual ~IState() = default;
         virtual void update() {}; // Does nothing, this is by design
 
         virtual common::MachineState getState() = 0;
