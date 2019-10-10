@@ -38,6 +38,8 @@ namespace runtime {
 
         bool isRunning();
 
+        void update();
+
     private:
         std::atomic<int8_t> current_block_ind_ {-1};
         FrameQueue data_queue_;
@@ -45,7 +47,6 @@ namespace runtime {
         Plan plan_;
         std::thread worker_thread_;
 
-        void update();
     };
 
     class Worker {

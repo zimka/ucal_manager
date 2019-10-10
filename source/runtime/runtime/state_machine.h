@@ -18,10 +18,12 @@ namespace runtime {
     using nlohmann::json;
     using DevicePtr = std::unique_ptr<device::IDevice>;
 
+    class CoreState;
+    using CorePtr = std::unique_ptr<CoreState>;
     class StateMachine : public IState {
     private:
         StatePtr state_;
-        StatePtr core_;
+        CorePtr core_;
 
     public:
         StateMachine ();
@@ -51,9 +53,7 @@ namespace runtime {
 
         void setState(StatePtr new_state);
 
-        StatePtr& accessCore();
-
-        virtual ~StateMachine() = default;
+        CorePtr& accessCore();
     };
 
     template <common::MachineStateType S>

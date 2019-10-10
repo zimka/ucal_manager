@@ -124,7 +124,7 @@ int worker_run() {
     std::string plan_input = "single_block.json";
 
     auto queue = runtime::FrameQueue();
-    std::atomic<int8_t> master_block_ind = 0;
+    std::atomic<int8_t> master_block_ind = {0};
     auto pln = readPlan(plan_input);
     int8_t prev_value = 0;
     int32_t prev_value_count = 0;

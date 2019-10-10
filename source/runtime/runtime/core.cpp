@@ -28,10 +28,6 @@ void validatePlan(Plan plan) {
     }
 }
 
-CoreState::~CoreState() {
-    stop();
-}
-
 common::MachineState CoreState::getState() {
     // This method should not be delegated to CoreState
     throw common::AssertionError("getState method call was delegated to CoreState");
@@ -141,6 +137,9 @@ void CoreState::runNext() {
         }
     }
     else {
+        if (worker_thread_.joinable()) {
+            worker_thread_.join();
+        }
         current_block_ind_.store(0);
         worker_thread_ = std::thread(
             [](std::atomic<int8_t>* master_block_ind, FrameQueue* queue, Plan plan) {

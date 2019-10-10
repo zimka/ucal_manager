@@ -65,7 +65,7 @@ void StateMachine::setState(StatePtr new_state) {
     state_ = move(new_state);
 }
 
-StatePtr& StateMachine::accessCore() {
+CorePtr& StateMachine::accessCore() {
     return core_;
 }
 
@@ -187,33 +187,33 @@ storage::Storage const& GenericState<MachineState::HasPlan>::getData() {
     return machine_->accessCore()->getData();
 }
 
-void updateAndSwitch(StateMachine* machine) {
-    auto& core = machine->accessCore();
-    core->update();
-    if (true) { // TODO: switch to core->isFinished()
+inline void checkAndSwitch(StateMachine* machine) {
+    if (!machine->accessCore()->isRunning()) {
         machine->setState(createState<MachineState::HasPlan>(machine));
     }
 }
 
 template <>
 Plan const& GenericState<MachineState::Executing>::getPlan() {
-    //machine_->accessCore()->update();
-    updateAndSwitch(machine_);
-    return machine_->accessCore()->getPlan(); // TODO: cut alredy done blocks from plan
+    machine_->accessCore()->update();
+    auto& plan = machine_->accessCore()->getPlan();
+    checkAndSwitch(machine_);
+    return plan; // TODO: cut alredy done blocks from plan
 }
 
 template <>
 void GenericState<MachineState::Executing>::runNext() {
     machine_->accessCore()->update();
-    //updateAndSwitch(machine_); // I'm not sure about state switching in runNext
+    //checkAndSwitch(machine_); // I'm not sure about state switching in runNext
     return machine_->accessCore()->runNext();
 }
 
 template <>
 storage::Storage const& GenericState<MachineState::Executing>::getData() {
     machine_->accessCore()->update();
-    updateAndSwitch(machine_);
-    return machine_->accessCore()->getData();
+    auto& data = machine_->accessCore()->getData();
+    checkAndSwitch(machine_);
+    return data;
 }
 
 template <>
@@ -227,7 +227,7 @@ template <>
 MachineState GenericState<MachineState::Executing>::getState() {
     machine_->accessCore()->update();
     auto state = MachineState::Executing;
-    if (false) // TODO: switch to accessCore()->isFinished() or whatever
+    if (!machine_->accessCore()->isRunning())
     {
         state = MachineState::HasPlan;
         machine_->setState(createState<MachineState::HasPlan>(machine_));

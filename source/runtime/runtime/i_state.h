@@ -17,7 +17,6 @@ namespace runtime {
     class IState {
     public:
         virtual ~IState() = default;
-        virtual void update() {}; // Does nothing, this is by design
 
         virtual common::MachineState getState() = 0;
         //TODO: should return json instead of Config
@@ -35,7 +34,6 @@ namespace runtime {
 
         virtual void stop() = 0;
 
-        virtual ~IState() = default;
     };
 
     using StatePtr = std::unique_ptr<IState>;
