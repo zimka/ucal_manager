@@ -38,12 +38,12 @@ common::Config const& CoreState::getConfig() {
     return *common::acquireConfig();
 }
 
-Plan const& CoreState::getPlan() {
+Plan CoreState::getPlan() {
     update();
-    // TODO: have to change signature 
-    //if (current_block_ind_ > 0) {
-    //    return Plan(plan_.begin() + current_block_ind_, plan.end());
-    //}
+    auto index = current_block_ind_.load();
+    if (index > 0) {
+        return Plan(plan_.begin() + index, plan_.end());
+    }
     return plan_;
 }
 
@@ -116,6 +116,7 @@ void CoreState::stop() {
 }
 
 bool runtime::CoreState::isRunning() {
+    update();
     return (current_block_ind_.load() != -1);
 }
 

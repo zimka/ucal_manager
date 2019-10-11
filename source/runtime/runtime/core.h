@@ -24,7 +24,7 @@ namespace runtime {
 
         common::Config const& getConfig() override; 
 
-        Plan const& getPlan() override;
+        Plan getPlan() override;
 
         storage::Storage const& getData() override;
 
@@ -38,14 +38,14 @@ namespace runtime {
 
         bool isRunning();
 
-        void update();
-
     private:
         std::atomic<int8_t> current_block_ind_ {-1};
         FrameQueue data_queue_;
         storage::Storage storage_;
         Plan plan_;
         std::thread worker_thread_;
+
+        void update();
 
     };
 

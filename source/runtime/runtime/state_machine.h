@@ -39,7 +39,7 @@ namespace runtime {
 
         common::Config const& getConfig() override;
 
-        Plan const& getPlan() override;
+        Plan getPlan() override;
 
         storage::Storage const& getData() override;
 
@@ -66,7 +66,7 @@ namespace runtime {
 
         common::Config const& getConfig() override;
 
-        Plan const& getPlan() override;
+        Plan getPlan() override;
 
         storage::Storage const& getData() override;
 

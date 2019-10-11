@@ -36,7 +36,7 @@ common::Config const& StateMachine::getConfig() {
     return state_->getConfig();
 }
 
-Plan const& StateMachine::getPlan() {
+Plan StateMachine::getPlan() {
     return state_->getPlan();
 }
 
@@ -125,7 +125,7 @@ common::Config const& GenericState<S>::getConfig() {
     return machine_->accessCore()->getConfig();
 }
 
-STATE_DEFAULT_THROW(Plan const&, getPlan)
+STATE_DEFAULT_THROW(Plan, getPlan)
 
 STATE_DEFAULT_THROW(storage::Storage const&, getData)
 
@@ -143,7 +143,7 @@ common::Config const& GenericState<MachineState::NotReady>::getConfig() {
 }
 
 template <>
-Plan const& GenericState<MachineState::NoPlan>::getPlan() {
+Plan GenericState<MachineState::NoPlan>::getPlan() {
     return machine_->accessCore()->getPlan();
 }
 
@@ -172,7 +172,7 @@ void GenericState<MachineState::HasPlan>::setPlan(Plan new_plan) {
 }
 
 template <>
-Plan const& GenericState<MachineState::HasPlan>::getPlan() {
+Plan GenericState<MachineState::HasPlan>::getPlan() {
     return machine_->accessCore()->getPlan();
 }
 
@@ -194,23 +194,22 @@ inline void checkAndSwitch(StateMachine* machine) {
 }
 
 template <>
-Plan const& GenericState<MachineState::Executing>::getPlan() {
-    machine_->accessCore()->update();
-    auto& plan = machine_->accessCore()->getPlan();
+Plan GenericState<MachineState::Executing>::getPlan() {
+    auto plan = machine_->accessCore()->getPlan();
     checkAndSwitch(machine_);
-    return plan; // TODO: cut alredy done blocks from plan
+    return std::move(plan);
 }
 
 template <>
 void GenericState<MachineState::Executing>::runNext() {
-    machine_->accessCore()->update();
+    //machine_->accessCore()->update();
     //checkAndSwitch(machine_); // I'm not sure about state switching in runNext
     return machine_->accessCore()->runNext();
 }
 
 template <>
 storage::Storage const& GenericState<MachineState::Executing>::getData() {
-    machine_->accessCore()->update();
+    //machine_->accessCore()->update();
     auto& data = machine_->accessCore()->getData();
     checkAndSwitch(machine_);
     return data;
@@ -218,14 +217,14 @@ storage::Storage const& GenericState<MachineState::Executing>::getData() {
 
 template <>
 void GenericState<MachineState::Executing>::stop() {
-    machine_->accessCore()->update();
+    //machine_->accessCore()->update();
     machine_->accessCore()->stop();
     machine_->setState(createState<MachineState::HasPlan>(machine_));
 }
 
 template <>
 MachineState GenericState<MachineState::Executing>::getState() {
-    machine_->accessCore()->update();
+    //machine_->accessCore()->update();
     auto state = MachineState::Executing;
     if (!machine_->accessCore()->isRunning())
     {

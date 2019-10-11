@@ -22,7 +22,7 @@ namespace runtime {
         //TODO: should return json instead of Config
         virtual common::Config const& getConfig() = 0; ///< returns read-only config reference
 
-        virtual Plan const& getPlan() = 0;
+        virtual Plan getPlan() = 0;
         //TODO: should return FrameIterator and take TimeStamp optional index
         virtual storage::Storage const& getData() = 0;
 
