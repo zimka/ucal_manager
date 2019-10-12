@@ -10,6 +10,8 @@ namespace device {
     #ifdef REAL_DEVICE
     return std::make_unique<DaqboardDevice>();
     #else
+    // TODO: must be fixed!
+    return std::make_unique<DaqboardDevice>();
     return std::make_unique<MockDevice>();
     #endif
     }

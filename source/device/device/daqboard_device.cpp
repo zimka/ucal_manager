@@ -87,6 +87,7 @@ std::string DaqboardDevice::getSetup() const {
 
 void DaqboardDevice::prepare() {
     checkState({DeviceState::CanSet});
+    // TODO: must use time units to sec, not 1000
     timer_.setStep(common::TimeUnit(1000/sampling_frequency_hz_));
     prepareDeviceRead();
     prepareDeviceWrite();
@@ -210,6 +211,10 @@ void DaqboardDevice::prepareDeviceRead() {
         daqAdcSetAcq(handle_, DaamNShot, 0, scans_number);
         daqSetTriggerEvent(handle_, DatsScanCount, (DaqEnhTrigSensT)NULL, 0, (DaqAdcGain)0, 0, DaqTypeAnalogLocal, 0.0,
             0.0, DaqStopEvent);
+    }
+    else {
+        daqSetTriggerEvent(handle_, DatsSoftware, (DaqEnhTrigSensT)NULL, 0, (DaqAdcGain)0, 0, DaqTypeAnalogLocal, 0.0, 0.0,
+            DaqStopEvent);
     }
     //3. Setting the Acquisition Rate - How Fast Should the Channels be Scanned?
     float real_scan_freq = 0;

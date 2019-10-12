@@ -50,7 +50,6 @@ void StateMachine::setConfig(json const& json_cfg) {
 
 void StateMachine::setPlan(Plan new_plan) {
     state_->setPlan(move(new_plan));
-    //dummyContext_.plan = new_plan;
 }
 
 void StateMachine::runNext() {

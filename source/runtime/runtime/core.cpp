@@ -151,8 +151,8 @@ void CoreState::runNext() {
                         worker.doStep();
                     }
                 } catch (common::UcalManagerException& exc) {
+                    // TODO: logging
                 }
-
             },
             &current_block_ind_, &data_queue_, plan_
         );
