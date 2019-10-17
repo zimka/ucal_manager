@@ -16,13 +16,13 @@
 namespace runtime {
     class IState {
     public:
-        virtual void update() {}; // Does nothing, this is by design
+        virtual ~IState() = default;
 
         virtual common::MachineState getState() = 0;
         //TODO: should return json instead of Config
         virtual common::Config const& getConfig() = 0; ///< returns read-only config reference
 
-        virtual Plan const& getPlan() = 0;
+        virtual Plan getPlan() = 0;
         //TODO: should return FrameIterator and take TimeStamp optional index
         virtual storage::Storage const& getData() = 0;
 
@@ -33,6 +33,7 @@ namespace runtime {
         virtual void runNext() = 0;
 
         virtual void stop() = 0;
+
     };
 
     using StatePtr = std::unique_ptr<IState>;

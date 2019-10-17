@@ -25,7 +25,11 @@ namespace runtime {
         }
 
         bool isFinite() const { return block_len_tu > 0; }
-        bool isReadOnly() const { return pattern_len_tu == 0; }
+        bool isReadOnly() const {
+            // fails if mod or guard size() > 0
+            // TODO: validation in core
+            return pattern_len_tu == 0;
+        }
 
         std::string repr() const;
 

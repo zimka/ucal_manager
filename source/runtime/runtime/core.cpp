@@ -3,13 +3,15 @@
 
 using namespace runtime;
 
+CoreState::~CoreState() {
+    stop();
+}
+
 void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
     device->setReadingSampling(block.sampling_step_tu);
 
-    if (block.isFinite()) {
-        device->setDuration(block.block_len_tu);
-    }
-    if (!(block.isReadOnly())) {
+    device->setDuration(block.block_len_tu);
+    if ((block.guard.size() || block.mod.size())) {
         device->setProfiles({
             {common::ControlKey::Vg, block.guard},
             {common::ControlKey::Vm, block.mod},
@@ -22,6 +24,7 @@ void validatePlan(Plan plan) {
     auto device = device::acquireDevice();
     for (auto block : plan) {
         loadBlock(device, block);
+        device->stop();
     }
 }
 
@@ -35,12 +38,12 @@ common::Config const& CoreState::getConfig() {
     return *common::acquireConfig();
 }
 
-Plan const& CoreState::getPlan() {
+Plan CoreState::getPlan() {
     update();
-    // TODO: have to change signature 
-    //if (current_block_ind_ > 0) {
-    //    return Plan(plan_.begin() + current_block_ind_, plan.end());
-    //}
+    auto index = current_block_ind_.load();
+    if (index > 0) {
+        return Plan(plan_.begin() + index, plan_.end());
+    }
     return plan_;
 }
 
@@ -112,6 +115,11 @@ void CoreState::stop() {
     storage_.finalize();
 }
 
+bool runtime::CoreState::isRunning() {
+    update();
+    return (current_block_ind_.load() != -1);
+}
+
 void CoreState::runNext() {
     // if already running
     auto local_block_index = current_block_ind_.load();
@@ -129,30 +137,39 @@ void CoreState::runNext() {
             // TODO: join thread?
         }
     }
-    current_block_ind_.store(0);
-    worker_thread_ = std::thread(
-        [](std::atomic<int8_t>* master_block_ind, FrameQueue* queue, Plan plan) {
-            auto worker = Worker(master_block_ind, queue, plan);
-            while (!worker.finished()) {
-                // TODO: some sleep?
-                worker.doStep();
-            }
-        },
-        &current_block_ind_, &data_queue_, plan_
-    );
+    else {
+        if (worker_thread_.joinable()) {
+            worker_thread_.join();
+        }
+        current_block_ind_.store(0);
+        worker_thread_ = std::thread(
+            [](std::atomic<int8_t>* master_block_ind, FrameQueue* queue, Plan plan) {
+                try {
+                    auto worker = Worker(master_block_ind, queue, plan);
+                    while (!worker.finished()) {
+                        // TODO: some sleep?
+                        worker.doStep();
+                    }
+                } catch (common::UcalManagerException& exc) {
+                    // TODO: logging
+                }
+            },
+            &current_block_ind_, &data_queue_, plan_
+        );
+    }
 }
 
 void CoreState::update() {
     while (data_queue_.peek() != nullptr) {
         storage::Frame frame;
         bool status = data_queue_.try_dequeue(frame);
-        if (status){
+        if (status) {
             storage_.append(std::move(frame));
         }
     }
 }
 
-Worker::Worker(std::atomic<int8_t>* master_block_ind, FrameQueue * queue, Plan plan): global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {
+Worker::Worker(std::atomic<int8_t>* master_block_ind, FrameQueue * queue, Plan plan) : global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {
     device_ = device::acquireDevice();
     worker_block_ind_ = -1;
 }
@@ -179,6 +196,12 @@ void Worker::doStep() {
         if (master_block_ind < 0) {
             return;
         }
+        if (master_block_ind >= plan_.size()) {
+            // finish execution
+            global_block_ind_->store(-1);
+            return;
+        }
+
         loadBlock(device_, plan_.at(master_block_ind));
         device_->run();
         worker_block_ind_ = master_block_ind;
@@ -191,14 +214,7 @@ void Worker::doStep() {
     else if ((is_sync) && (!is_running)) {
         //Timeout: worker is synced with master, but device has finished block on its own
         //then: move forward master index, becomes Ready
-        if ((worker_block_ind_ + 1) < plan_.size()) {
-            // run next block if can
-            global_block_ind_->store(worker_block_ind_ + 1);
-        }
-        else {
-            // finish execution
-            global_block_ind_->store(-1);
-        }
+        global_block_ind_->store(worker_block_ind_ + 1);
     }
 };
 

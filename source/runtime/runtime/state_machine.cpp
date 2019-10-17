@@ -5,6 +5,7 @@
 #include "state_machine.h"
 #include "core.h"
 #include <common/exceptions.h>
+#include <device/acquire.h>
 
 #include <sstream>
 //#include <thread>
@@ -17,13 +18,14 @@ using common::MachineStateType;
 
 StateMachine::StateMachine()
     : core_(std::make_unique<CoreState>())
-{}
-
-StateMachine::StateMachine(Context context)
-    : context_(move(context))
-    , core_(std::make_unique<CoreState>())
 {
-    state_ = createState<MachineState::NoPlan>(this);
+    try {
+        auto trial = device::acquireDevice();
+        setState(createState<MachineState::NoPlan>(this));
+    }
+    catch (const common::DeviceError& err) {
+        setState(createState<MachineState::Error>(this));
+    }
 }
 
 MachineState StateMachine::getState() {
@@ -34,7 +36,7 @@ common::Config const& StateMachine::getConfig() {
     return state_->getConfig();
 }
 
-Plan const& StateMachine::getPlan() {
+Plan StateMachine::getPlan() {
     return state_->getPlan();
 }
 
@@ -48,7 +50,6 @@ void StateMachine::setConfig(json const& json_cfg) {
 
 void StateMachine::setPlan(Plan new_plan) {
     state_->setPlan(move(new_plan));
-    //dummyContext_.plan = new_plan;
 }
 
 void StateMachine::runNext() {
@@ -59,21 +60,13 @@ void StateMachine::stop() {
     state_->stop();
 }
 
-Context& StateMachine::getContext() {
-    return context_;
-}
-
 void StateMachine::setState(StatePtr new_state) {
     state_ = move(new_state);
 }
 
-/*template <MachineStateType S>
-void GenericState<S>::throwError(const char* name) {
-    std::stringstream message;
-    message << "Cannot execute " << name << " from "
-            << MachineState::_from_integral(S)._to_string();
-    throw common::StateViolationError(message.str());
-}*/
+CorePtr& StateMachine::accessCore() {
+    return core_;
+}
 
 // THIS CODE IS FAKE AND MUST NOT BE EXECUTED
 // IT'S SOLE PURPOSE IS TO INSTANTIATE ALL NEEDED TEMPLATE VARIANTS IN COMPILE TIME
@@ -131,7 +124,7 @@ common::Config const& GenericState<S>::getConfig() {
     return machine_->accessCore()->getConfig();
 }
 
-STATE_DEFAULT_THROW(Plan const&, getPlan)
+STATE_DEFAULT_THROW(Plan, getPlan)
 
 STATE_DEFAULT_THROW(storage::Storage const&, getData)
 
@@ -149,15 +142,20 @@ common::Config const& GenericState<MachineState::NotReady>::getConfig() {
 }
 
 template <>
-Plan const& GenericState<MachineState::NoPlan>::getPlan() {
+Plan GenericState<MachineState::NoPlan>::getPlan() {
     return machine_->accessCore()->getPlan();
+}
+
+template <>
+void GenericState<MachineState::NoPlan>::setConfig(json const& data) {
+    return machine_->accessCore()->setPlan(data);
 }
 
 template <>
 void GenericState<MachineState::NoPlan>::setPlan(Plan new_plan) {
     if(!new_plan.empty())
     {
-        machine_->accessCore()->setPlan(move(new_plan));
+        machine_->accessCore()->setPlan(new_plan);
         machine_->setState(createState<MachineState::HasPlan>(machine_));
     }
 }
@@ -173,7 +171,7 @@ void GenericState<MachineState::HasPlan>::setPlan(Plan new_plan) {
 }
 
 template <>
-Plan const& GenericState<MachineState::HasPlan>::getPlan() {
+Plan GenericState<MachineState::HasPlan>::getPlan() {
     return machine_->accessCore()->getPlan();
 }
 
@@ -183,88 +181,54 @@ void GenericState<MachineState::HasPlan>::runNext() {
     machine_->setState(createState<MachineState::Executing>(machine_));
 }
 
-/*GenericState<MachineState::Executing>::GenericState(runtime::StateMachine* machine)
-    :machine_(machine)
-{
-    // Start monitoring
-    auto callable = [] (Context* context) {
-        using common::ControlKey;
-        auto& device = context->device;
-        auto& plan = context->plan;
-        auto p_start = plan.begin();
-        auto p_end = plan.end();
-        //std::rotate(plan.begin(), plan.begin() + 1, plan.end());
-        auto p_block = p_start;
-        while (p_block != p_end) {
-            device->setProfiles(
-                    {
-                            {ControlKey::Vg, p_block->guard},
-                            {ControlKey::Vm, p_block->mod},
-                    },
-                    p_block->pattern_len_tu
-            );
-            device->setDuration(p_block->block_len_tu);
-            device->setReadingSampling(p_block->sampling_step_tu, 1);
-            device->prepare();
-            device->run();
-            std::this_thread::sleep_for(std::chrono::milliseconds(p_block->block_len_tu));
-            context->storage.append(device->getData());
-            if(device->getState() == +device::DeviceState::CanSet) {
-                throw common::StateViolationError ("Device must be in CanSet after all data was extracted");
-            }
-            p_block++;
-        }
-        context->storage.finalize();
-    };
-    callable(&machine_->getContext());
-    //machine_->accessMonitor() = std::thread(callable, &machine_->getContext());
-    //machine_->setState(createState<MachineState::HasPlan>(machine_));
-}*/
-
-/*void GenericState<MachineState::Executing>::throwError(const char* name) {
-    std::stringstream message;
-    message << "Cannot execute " << name << " from "
-            << MachineState::Executing;
-    throw common::StateViolationError(message.str());
+template <>
+storage::Storage const& GenericState<MachineState::HasPlan>::getData() {
+    return machine_->accessCore()->getData();
 }
 
-MachineState GenericState<MachineState::Executing>::getState() {
-    return MachineState::Executing;
+inline void checkAndSwitch(StateMachine* machine) {
+    if (!machine->accessCore()->isRunning()) {
+        machine->setState(createState<MachineState::HasPlan>(machine));
+    }
 }
-
-common::Config const& GenericState<MachineState::Executing>::getConfig() {
-    return *common::acquireConfig();
-}*/
 
 template <>
-Plan const& GenericState<MachineState::Executing>::getPlan() {
-    return machine_->accessCore()->getPlan(); // TODO: cut alredy done blocks from plan
+Plan GenericState<MachineState::Executing>::getPlan() {
+    auto plan = machine_->accessCore()->getPlan();
+    checkAndSwitch(machine_);
+    return std::move(plan);
 }
 
 template <>
 void GenericState<MachineState::Executing>::runNext() {
+    //machine_->accessCore()->update();
+    //checkAndSwitch(machine_); // I'm not sure about state switching in runNext
     return machine_->accessCore()->runNext();
 }
 
 template <>
 storage::Storage const& GenericState<MachineState::Executing>::getData() {
-    return machine_->accessCore()->getData();
+    //machine_->accessCore()->update();
+    auto& data = machine_->accessCore()->getData();
+    checkAndSwitch(machine_);
+    return data;
 }
-
-/*void GenericState<MachineState::Executing>::setConfig(json const&) {
-    THROW_ERROR(setConfig, MachineState::Executing)
-}
-
-void GenericState<MachineState::Executing>::setPlan(runtime::Plan) {
-    THROW_ERROR(setPlan, MachineState::Executing)
-}
-
-void GenericState<MachineState::Executing>::runNext() {
-    THROW_ERROR(runNext, MachineState::Executing)
-}*/
 
 template <>
 void GenericState<MachineState::Executing>::stop() {
+    //machine_->accessCore()->update();
     machine_->accessCore()->stop();
     machine_->setState(createState<MachineState::HasPlan>(machine_));
+}
+
+template <>
+MachineState GenericState<MachineState::Executing>::getState() {
+    //machine_->accessCore()->update();
+    auto state = MachineState::Executing;
+    if (!machine_->accessCore()->isRunning())
+    {
+        state = MachineState::HasPlan;
+        machine_->setState(createState<MachineState::HasPlan>(machine_));
+    }
+    return state; // Double recursive O_o
 }

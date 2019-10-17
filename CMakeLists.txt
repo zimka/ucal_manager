@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 # "Set this to true, if you wish to build using real device. WINDOWS ONLY"
 # "Requires manual source/device rebuild"
-set(USE_REAL_DEVICE OFF ) 
+set(USE_REAL_DEVICE true ) 
 message("Root CMakeLists.txt: USE_REAL_DEVICE is set to ${USE_REAL_DEVICE}")
 
 if (UNIX AND USE_REAL_DEVICE)

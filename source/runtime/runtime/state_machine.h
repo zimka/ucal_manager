@@ -17,40 +17,29 @@
 namespace runtime {
     using nlohmann::json;
     using DevicePtr = std::unique_ptr<device::IDevice>;
-    struct DummyPlan {
-        bool valid;
-    };
-    struct Context {
-        Plan plan;
-        DevicePtr device;
-        storage::Storage storage;
 
-        /*Context (Context&& other)
-            : plan(std::move(other.plan))
-            , device(std::move(other.device))
-            , storage(std::move(other.storage))
-        {}*/
-    };
-
-
-
+    class CoreState;
+    using CorePtr = std::unique_ptr<CoreState>;
     class StateMachine : public IState {
     private:
         StatePtr state_;
-        StatePtr core_;
-        Context context_;
-        //std::thread monitor_;
+        CorePtr core_;
 
     public:
         StateMachine ();
-        explicit StateMachine (Context context);
-        //void update() override;
+        ~StateMachine() override = default;
+        
+        StateMachine(StateMachine const& other) = delete;
+        StateMachine& operator=(StateMachine const& other) = delete;
+
+        StateMachine(StateMachine&& other) = default;
+        StateMachine& operator=(StateMachine&& other) = default;
 
         common::MachineState getState() override;
 
         common::Config const& getConfig() override;
 
-        Plan const& getPlan() override;
+        Plan getPlan() override;
 
         storage::Storage const& getData() override;
 
@@ -62,25 +51,22 @@ namespace runtime {
 
         void stop() override;
 
-        Context& getContext();
-
         void setState(StatePtr new_state);
 
-        StatePtr const& accessCore() { return core_; }
-
-        //std::thread& accessMonitor() { return monitor_; }
+        CorePtr& accessCore();
     };
 
     template <common::MachineStateType S>
     class GenericState : public IState {
     public:
         GenericState() = default;
-        GenericState(StateMachine* machine) : machine_(machine) {}
+        explicit GenericState(StateMachine* machine) : machine_(machine) {}
+        ~GenericState() override = default;
         common::MachineState getState() override;
 
         common::Config const& getConfig() override;
 
-        Plan const& getPlan() override;
+        Plan getPlan() override;
 
         storage::Storage const& getData() override;
 
@@ -94,36 +80,7 @@ namespace runtime {
 
     private:
         StateMachine* machine_;
-
-        //void throwError(const char* name);
     };
-
-    /*template <>
-    class GenericState<MachineState::Executing> : public IState {
-    public:
-        GenericState() = default;
-        GenericState(StateMachine* machine);
-        MachineState getState() override;
-
-        common::Config const& getConfig() override;
-
-        Plan const& getPlan() override;
-
-        storage::Storage const& getData() override;
-
-        void setConfig(json const&) override;
-
-        void setPlan(Plan) override;
-
-        void runNext() override;
-
-        void stop() override;
-
-    private:
-        StateMachine* machine_;
-
-        //static void throwError(const char* name);
-    };*/
 
     template <common::MachineStateType S>
     StatePtr createState(StateMachine* machine) {

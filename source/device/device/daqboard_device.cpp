@@ -87,6 +87,8 @@ std::string DaqboardDevice::getSetup() const {
 
 void DaqboardDevice::prepare() {
     checkState({DeviceState::CanSet});
+    // TODO: must use time units to sec, not 1000
+    timer_.setStep(common::TimeUnit(1000/sampling_frequency_hz_));
     prepareDeviceRead();
     prepareDeviceWrite();
     state_ = DeviceState::Prepared;
@@ -210,6 +212,10 @@ void DaqboardDevice::prepareDeviceRead() {
         daqSetTriggerEvent(handle_, DatsScanCount, (DaqEnhTrigSensT)NULL, 0, (DaqAdcGain)0, 0, DaqTypeAnalogLocal, 0.0,
             0.0, DaqStopEvent);
     }
+    else {
+        daqSetTriggerEvent(handle_, DatsSoftware, (DaqEnhTrigSensT)NULL, 0, (DaqAdcGain)0, 0, DaqTypeAnalogLocal, 0.0, 0.0,
+            DaqStopEvent);
+    }
     //3. Setting the Acquisition Rate - How Fast Should the Channels be Scanned?
     float real_scan_freq = 0;
     DaqError err = daqAdcSetRate(handle_, DarmFrequency, DaasPostTrig, sampling_frequency_hz_, &real_scan_freq);
@@ -220,11 +226,11 @@ void DaqboardDevice::prepareDeviceRead() {
     auto inner_buffer_size = (unsigned int)(sampling_frequency_hz_ * DAQBOARD_SIGNALS_NUMBER * getBufferSizePerHz());
     daqAdcTransferSetBuffer(handle_, NULL, inner_buffer_size, DatmUpdateBlock | DatmDriverBuf);
     //5.Arming the Acquisition and Starting the Transfer
+    daqAdcTransferStart(handle_);
     err = daqAdcArm(handle_);
     if (err) {
         throw common::DeviceError("Daqboard Error arming ADC, error code: " + std::to_string(err));
     }
-    daqAdcTransferStart(handle_);
 }
 
 void DaqboardDevice::prepareChannelWrite(common::ControlKey key) {
@@ -241,6 +247,9 @@ void DaqboardDevice::prepareChannelWrite(common::ControlKey key) {
  *  9. Terminate by daq daqDacWaveDisarm
  */
     auto& buffer = profiles_.at(key);
+    if (!buffer.size()) {
+        throw common::DeviceError("Empty control channel was set to device - it is forbidden!");
+    }
     WORD channel_number = getControlChannelId(key);
     // 1.
     daqDacSetOutputMode(handle_, DddtLocal, channel_number, DdomStaticWave);
@@ -335,6 +344,7 @@ void device::DaqboardDevice::startDevice() {
 
 void device::DaqboardDevice::stopDevice() {
     daqDacWaveDisarm(handle_, DddtLocal);
+    daqAdcTransferStop(handle_);
     daqAdcDisarm(handle_);
     setChannelsToZero();
 }

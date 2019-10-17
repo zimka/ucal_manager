@@ -10,7 +10,7 @@
 using namespace runtime;
 
 static void testSleep(common::TimeUnit t) {
-    std::this_thread::sleep_for(std::chrono::milliseconds((int)t));
+    std::this_thread::sleep_for(std::chrono::milliseconds(t));
 }
 
 static void flushQueue(runtime::FrameQueue* queue) {
@@ -68,12 +68,20 @@ TEST_CASE("Block") {
 TEST_CASE("StateMachine") {
     using common::MachineState;
     Block block1 {
-            10,
-            10,
+            1,
+            100,
             1,
             {10, 20, 30, 40,},
             {110, 120, 130, 140,},
     };
+    Block block2 {
+            10,
+            0,
+            1,
+            {10, 20, 30, 40,},
+            {110, 120, 130, 140,},
+    };
+
     SECTION("NotReady") {
         StateMachine machine;
         machine.setState(createState<MachineState::NotReady>(&machine));
@@ -115,8 +123,10 @@ TEST_CASE("StateMachine") {
         //REQUIRE_THROWS(machine.SetConfig()); TODO: rewrite
         REQUIRE_THROWS(machine.runNext());
         REQUIRE_THROWS(machine.stop());
-        REQUIRE_NOTHROW((machine.setPlan(empty), machine.getState()._value == MachineState::NoPlan));
-        REQUIRE_NOTHROW((machine.setPlan(non_empty), machine.getState()._value == MachineState::HasPlan));
+        REQUIRE_NOTHROW(machine.setPlan(empty));
+        REQUIRE(machine.getState()._value == MachineState::NoPlan);
+        REQUIRE_NOTHROW(machine.setPlan(non_empty));
+        REQUIRE(machine.getState()._value == MachineState::HasPlan);
     }
 
     SECTION("HasPlan") {
@@ -127,34 +137,48 @@ TEST_CASE("StateMachine") {
         REQUIRE_NOTHROW(machine.getConfig()); // TODO: check config?
         Plan empty;
         Plan non_empty = { block1 };
-        REQUIRE_NOTHROW((machine.setPlan(non_empty), machine.getState()._value == MachineState::HasPlan));
-        REQUIRE_NOTHROW((machine.setPlan(empty), machine.getState()._value == MachineState::NoPlan));
-        REQUIRE_NOTHROW((machine.setPlan(non_empty), machine.getState()._value == MachineState::HasPlan));
-        REQUIRE_NOTHROW(machine.getPlan() == non_empty); // TODO: must return current plan
+        REQUIRE_NOTHROW(machine.setPlan(non_empty));
+        REQUIRE(machine.getState()._value == MachineState::HasPlan);
+        REQUIRE_NOTHROW(machine.setPlan(empty));
+        REQUIRE(machine.getState()._value == MachineState::NoPlan);
+        REQUIRE_NOTHROW(machine.setPlan(non_empty));
+        REQUIRE(machine.getState()._value == MachineState::HasPlan);
+        REQUIRE(machine.getPlan() == non_empty); // TODO: must return current plan
         //REQUIRE_THROWS(machine.getData()); TODO: rewrite
         //REQUIRE_THROWS(machine.SetConfig()); TODO: rewrite
         REQUIRE_THROWS(machine.stop());
-        REQUIRE_NOTHROW((machine.runNext(), machine.getState()._value == MachineState::Executing));
+        REQUIRE_NOTHROW(machine.runNext());
+        REQUIRE(machine.getState()._value == MachineState::Executing);
+        REQUIRE_NOTHROW(machine.stop());
+        REQUIRE(machine.getState() == +MachineState::HasPlan);
     }
 
     SECTION("Executing") {
         StateMachine machine;
         Plan empty;
-        Plan non_empty = { block1 };
+        Plan non_empty = { block2 , block1};
         machine.setState(createState<MachineState::NoPlan>(&machine));
-        REQUIRE_NOTHROW((machine.setPlan(non_empty), machine.getState()._value == MachineState::HasPlan));
-        REQUIRE_NOTHROW((machine.runNext(), machine.getState()._value == MachineState::Executing));
-
+        REQUIRE_NOTHROW(machine.setPlan(non_empty));
+        REQUIRE(machine.getState()._value == MachineState::HasPlan);
+        REQUIRE(machine.getPlan() == non_empty);
+        REQUIRE_NOTHROW(machine.runNext());
         REQUIRE(machine.getState()._value == MachineState::Executing);
-        REQUIRE_NOTHROW(machine.getConfig()); // TODO: check config?
-        REQUIRE_NOTHROW(machine.getPlan() == non_empty); // TODO: must return currently executed plan
-        //REQUIRE_THROWS(machine.getData()); TODO: rewrite TODO: must return data already collected
-        //REQUIRE_THROWS(machine.SetConfig()); TODO: rewrite
+        testSleep(150);
+        REQUIRE(machine.getPlan() == non_empty);
         REQUIRE_THROWS(machine.setPlan(non_empty));
         REQUIRE_THROWS(machine.setPlan(empty));
+
         // TODO: complex behaviour: run next block, if current block is infinite, else throw exception
-        //REQUIRE_NOTHROW((machine.runNext(), machine.getState()._value == MachineState::Executing));
-        REQUIRE_NOTHROW(machine.stop());
+        REQUIRE_NOTHROW(machine.runNext()); // Switch from infinite to finite
+        Plan tail = {block1};
+        REQUIRE(machine.getPlan() == tail);
+        //REQUIRE(machine.getState()._value == MachineState::HasPlan);
+        REQUIRE_NOTHROW(machine.getConfig());
+        //REQUIRE_THROWS(machine.getData()); TODO: rewrite TODO: must return data already collected
+        //REQUIRE_THROWS(machine.SetConfig()); TODO: rewrite
+        //REQUIRE_NOTHROW(machine.stop());
+        testSleep(200);
+        REQUIRE(machine.getState() == +MachineState::HasPlan); // FIXME: also unstable
     }
 }
 
@@ -235,6 +259,6 @@ TEST_CASE("Worker") {
                 break;
             }
         }
-        REQUIRE(i<=2);
+        REQUIRE(i<=3);
     }
 }

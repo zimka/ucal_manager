@@ -7,7 +7,7 @@ using namespace device;
 DeviceTimer::DeviceTimer(common::TimeUnit step) {
     step_ = step;
     overdue_ = 0;
-    start_ = clock_.now();
+    start_ = std::chrono::time_point<std::chrono::steady_clock>{}; //epoch
 };
 
 common::TimeStamp DeviceTimer::getStamp() const {
@@ -33,7 +33,9 @@ bool DeviceTimer::run() {
     if (is_running_) {
         return false;
     }
-    start_ = clock_.now();
+    if (start_ == std::chrono::time_point<std::chrono::steady_clock>{}){
+        start_ = clock_.now();
+    }
     is_running_ = true;
     return true;
 };
