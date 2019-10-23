@@ -30,11 +30,11 @@ TEST_CASE("Block") {
         };
 
         std::string result = "struct Block {"
-                             ", pattern_len_ = 10"
+                             ", write_step_ = 10"
                              ", block_len_ = 10"
-                             ", sampling_rate_ = 1.5"
-                             ", guard_ = { 10, 20, 30, 40, }"
-                             ", mod_ = { 110, 120, 130, 140, }"
+                             ", read_step_ = 1.5"
+                             ", voltage_0_ = { 10, 20, 30, 40, }"
+                             ", voltage_1_ = { 110, 120, 130, 140, }"
                              ;
         REQUIRE(block.repr() == result);
     }

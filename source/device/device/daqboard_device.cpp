@@ -256,7 +256,11 @@ void DaqboardDevice::prepareChannelWrite(common::ControlKey key) {
     //2.
     daqDacWaveSetClockSource(handle_, DddtLocal, channel_number, DdcsDacClock); //DdcsDacClock
     //3.
-    double dac_frequency = profile_length_ / buffer.size();
+    if (profile_length_ == 0) {
+        throw common::DeviceError("Profile length must be greater than zero");
+    }
+    // TODO: must be time units to ms, not 1000
+    double dac_frequency = double(buffer.size()) * 1000 / profile_length_;
     daqDacWaveSetFreq(handle_, DddtLocal, channel_number, dac_frequency);
     //4.
     bool ignored_param = true; // or false, doesn't matter, blame DaqBoard API

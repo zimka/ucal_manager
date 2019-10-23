@@ -8,14 +8,17 @@ CoreState::~CoreState() {
 }
 
 void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
-    device->setReadingSampling(block.sampling_step_tu);
+    device->setReadingSampling(block.read_step_tu);
 
     device->setDuration(block.block_len_tu);
-    if ((block.guard.size() || block.mod.size())) {
+    if ((block.voltage_0.size() || block.voltage_1.size())) {
+        if (block.voltage_0.size() != block.voltage_1.size()) {
+            throw common::DeviceError("Different sizes for voltages");
+        }
         device->setProfiles({
-            {common::ControlKey::Vg, block.guard},
-            {common::ControlKey::Vm, block.mod},
-            }, block.pattern_len_tu);
+            {common::ControlKey::Vg, block.voltage_0},
+            {common::ControlKey::Vm, block.voltage_1},
+            }, block.write_step_tu * block.voltage_0.size());
     }
     device->prepare();
 }
