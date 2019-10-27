@@ -12,7 +12,7 @@ using nlohmann::json;
 
 //====================PUBLIC====================
 
-DaqboardDevice::DaqboardDevice(std::string name) : timer_(10) {
+DaqboardDevice::DaqboardDevice(std::string name) : timer_(DEFAULT_DAQBOARD_TIMER_STEP_TU) {
     daqSetDefaultErrorHandler(0); // no error handling from DaqX, handle them manually
     handle_ = daqOpen(const_cast<char *>(name.c_str()));
     if (handle_ == -1) {
@@ -88,7 +88,7 @@ std::string DaqboardDevice::getSetup() const {
 void DaqboardDevice::prepare() {
     checkState({DeviceState::CanSet});
     // TODO: must use time units to sec, not 1000
-    timer_.setStep(common::TimeUnit(1000/sampling_frequency_hz_));
+    timer_.setStep(timer_.millisecondsToUnits(1000/sampling_frequency_hz_));
     prepareDeviceRead();
     prepareDeviceWrite();
     state_ = DeviceState::Prepared;
@@ -259,15 +259,16 @@ void DaqboardDevice::prepareChannelWrite(common::ControlKey key) {
     if (profile_length_ == 0) {
         throw common::DeviceError("Profile length must be greater than zero");
     }
-    // TODO: must be time units to ms, not 1000
-    double dac_frequency = double(buffer.size()) * 1000 / profile_length_;
-    daqDacWaveSetFreq(handle_, DddtLocal, channel_number, dac_frequency);
+    double profile_length_s = timer_.unitsToMilliseconds(profile_length_) / 1000;
+    double dac_frequency_hz = double(buffer.size()) / profile_length_s;
+    daqDacWaveSetFreq(handle_, DddtLocal, channel_number, dac_frequency_hz);
     //4.
     bool ignored_param = true; // or false, doesn't matter, blame DaqBoard API
     daqDacWaveSetTrig(handle_, DddtLocal, channel_number, DdtsSoftware, ignored_param);
     //5.
     if (total_duration_ > 0) {
-        DWORD update_count = dac_frequency * total_duration_;
+        double total_duration_s = timer_.unitsToMilliseconds(total_duration_) / 1000;
+        DWORD update_count = dac_frequency_hz * total_duration_s;
         daqDacWaveSetMode(handle_, DddtLocal, channel_number, DdwmNShot, update_count);
     }
     else {

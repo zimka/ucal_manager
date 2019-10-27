@@ -36,9 +36,21 @@ common::MachineState CoreState::getState() {
     throw common::AssertionError("getState method call was delegated to CoreState");
 }
 
-common::Config const& CoreState::getConfig() {
+json CoreState::getConfig() {
     update();
-    return *common::acquireConfig();
+    auto& config = *common::acquireConfig();
+    json dump;
+    for (common::ConfigDoubleKey k : common::ConfigDoubleKey::_values()) {
+        if ( k != +common::ConfigDoubleKey::Undefined){
+            dump[k._to_string()] = config.readDouble(k);
+        }
+    }
+    for (common::ConfigStringKey k : common::ConfigStringKey ::_values()) {
+        if ( k != +common::ConfigStringKey ::Undefined){
+            dump[k._to_string()] = config.readStr(k);
+        }
+    }
+    return dump;
 }
 
 Plan CoreState::getPlan() {
@@ -67,12 +79,19 @@ void CoreState::setPlan(Plan plan) {
 
     plan_ = plan;
     storage_.reset();
+    storage_.setFrameSize(
+        common::acquireConfig()->readDouble(common::ConfigDoubleKey::StorageFrameSize)
+    );
     // Drop old data if it is somehow still there
     data_queue_ = FrameQueue();
 }
 
 void CoreState::setConfig(json const& json_data){
     auto config = common::acquireConfig();
+    if (! json_data.size()) {
+        config->reset();
+        return;
+    }
     auto it = json_data.begin();
     while (it != json_data.end()) {
         std::string error_msg = "Invalid config: " + json_data.dump();
@@ -206,6 +225,7 @@ void Worker::doStep() {
         }
 
         loadBlock(device_, plan_.at(master_block_ind));
+        std::cout << device_->getSetup() << std::endl;
         device_->run();
         worker_block_ind_ = master_block_ind;
     }

@@ -32,7 +32,7 @@ MachineState StateMachine::getState() {
     return state_->getState();
 }
 
-common::Config const& StateMachine::getConfig() {
+json StateMachine::getConfig() {
     return state_->getConfig();
 }
 
@@ -120,7 +120,7 @@ MachineState GenericState<S>::getState() {
 }
 
 template <MachineStateType S>
-common::Config const& GenericState<S>::getConfig() {
+json GenericState<S>::getConfig() {
     return machine_->accessCore()->getConfig();
 }
 
@@ -137,8 +137,8 @@ STATE_DEFAULT_THROW(void, runNext)
 STATE_DEFAULT_THROW(void, stop)
 
 template <>
-common::Config const& GenericState<MachineState::NotReady>::getConfig() {
-    THROW_ERROR(getConfig, MachineState::NotReady);
+void GenericState<MachineState::Error>::setConfig(const json& data) {
+    return machine_->accessCore()->setConfig(data);
 }
 
 template <>
@@ -148,7 +148,7 @@ Plan GenericState<MachineState::NoPlan>::getPlan() {
 
 template <>
 void GenericState<MachineState::NoPlan>::setConfig(json const& data) {
-    return machine_->accessCore()->setPlan(data);
+    return machine_->accessCore()->setConfig(data);
 }
 
 template <>

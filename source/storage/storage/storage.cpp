@@ -100,6 +100,13 @@ size_t Storage::getFrameSize() const {
     return frame_size_;
 }
 
+void Storage::setFrameSize(size_t frame_size){
+    if (!empty()) {
+        throw common::AssertionError("Frame size cannot be changed when storage is not empty");
+    };
+    frame_size_ = frame_size;
+}
+
 bool Storage::reset() {
     data_.clear();
     head_ = nullptr;

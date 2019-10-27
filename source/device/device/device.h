@@ -19,6 +19,7 @@ namespace device {
     constexpr static const char* DEFAULT_DAQBOARD_NAME = "DaqBoard3001USB";
     constexpr double DEFAULT_DAQBOARD_SAMPLING_RATE_HZ = 50;
     constexpr uint32_t DEFAULT_DAQBOARD_BUFFER_SIZE_PER_HZ = 100;
+    constexpr uint8_t DEFAULT_DAQBOARD_TIMER_STEP_TU = 10;
     constexpr double VABSMAX = 10000.; //measured in mV
     constexpr uint32_t COUNTSMAX = 65535;
     constexpr size_t DAQBOARD_SIGNALS_NUMBER = 5;

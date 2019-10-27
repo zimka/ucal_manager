@@ -11,7 +11,7 @@ using namespace common;
 using nlohmann::json;
 
 static const char DEFAULT[] =
-        R"({"BoardId": "DaqBoard2000", "SamplingFreq": 10.11})";
+        R"({"BoardId": "DaqBoard3001USB", "TimeUnitSize":1, "StorageFrameSize": 10})";
 
 static std::atomic_bool IMMUTABLE(false);
 
@@ -26,7 +26,6 @@ namespace common {
         return instance;
     }
 }
-
 
 static void write_file(const char* filename, const json& data) {
     std::ofstream file(filename);

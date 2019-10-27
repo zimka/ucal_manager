@@ -20,7 +20,7 @@ namespace runtime {
 
         virtual common::MachineState getState() = 0;
         //TODO: should return json instead of Config
-        virtual common::Config const& getConfig() = 0; ///< returns read-only config reference
+        virtual json getConfig() = 0; ///< returns read-only config reference
 
         virtual Plan getPlan() = 0;
         //TODO: should return FrameIterator and take TimeStamp optional index

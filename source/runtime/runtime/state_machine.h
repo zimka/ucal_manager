@@ -37,7 +37,7 @@ namespace runtime {
 
         common::MachineState getState() override;
 
-        common::Config const& getConfig() override;
+        json getConfig() override;
 
         Plan getPlan() override;
 
@@ -64,7 +64,7 @@ namespace runtime {
         ~GenericState() override = default;
         common::MachineState getState() override;
 
-        common::Config const& getConfig() override;
+        json getConfig() override;
 
         Plan getPlan() override;
 
