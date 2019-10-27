@@ -131,8 +131,8 @@ namespace device {
         DeviceTimer timer_;
         mutable DeviceState state_ = DeviceState::CanSet;
         std::map<common::ControlKey, std::vector<unsigned short>> profiles_ = {};
-        common::TimeUnit profile_length_ = 0;
-        common::TimeUnit total_duration_ = 0;
+        double profile_length_s_ = 0;
+        double total_duration_s_ = 0;
         double sampling_frequency_hz_ = DEFAULT_DAQBOARD_SAMPLING_RATE_HZ;
 
         uint32_t toCount(common::MilliVolt v) const;
@@ -149,11 +149,11 @@ namespace device {
 
         void prepareChannelWrite(common::ControlKey key);
 
-        void startDevice();
+        int16_t startDevice() noexcept;
 
-        void stopDevice();
+        void stopDevice() noexcept;
 
-        void setChannelsToZero();
+        void setChannelsToZero() noexcept;
 
         void checkState(std::vector<DeviceState> allowed_states);
 

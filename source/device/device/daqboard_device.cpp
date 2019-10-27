@@ -42,12 +42,12 @@ void DaqboardDevice::setProfiles(const ProfileSetup& profiles, common::TimeUnit 
         }
         profiles_[pair.first] = buffer;
     }
-    profile_length_ = profile_length;
+    profile_length_s_ = timer_.unitsToMilliseconds(profile_length) / 1000;
 }
 
 void DaqboardDevice::setDuration(common::TimeUnit total_duration) {
     checkState({DeviceState::CanSet});
-    total_duration_ = total_duration;
+    total_duration_s_ = timer_.unitsToMilliseconds(total_duration)/1000;
 }
 
 void DaqboardDevice::setTimer(DeviceTimer timer) {
@@ -66,8 +66,8 @@ void DaqboardDevice::setReadingSampling(common::TimeUnit step, uint16_t per_poin
 std::string DaqboardDevice::getSetup() const {
     std::map < std::string, std::string > setup = {
         {"sampling_rate_hz", std::to_string(sampling_frequency_hz_)},
-        {"profile_length", std::to_string(profile_length_) },
-        {"total_duration", std::to_string(total_duration_)}
+        {"profile_length_s", std::to_string(profile_length_s_) },
+        {"total_duration_s", std::to_string(total_duration_s_)}
     };
     // TODO: if VoltageProfile and SignalData became the same, next code would be much simpler
     for (auto key : common::ControlKey::_values()) {
@@ -96,7 +96,14 @@ void DaqboardDevice::prepare() {
 
 void DaqboardDevice::run() {
     checkState({DeviceState::Prepared});
-    startDevice();
+    int16_t err_code = startDevice();
+    if (err_code < 0) {
+        throw common::DeviceError("Read configuration Daqboard Error; code: " + std::to_string(-err_code));
+    }
+    if (err_code > 0) {
+        throw common::DeviceError("Write configuration Daqboard Error; code: " + std::to_string(err_code));
+    }
+
     timer_.run();
     state_ = DeviceState::Running;
 }
@@ -145,7 +152,7 @@ storage::Frame DaqboardDevice::getData() {
     // Daqboard can stop itself if all scans are taken
     if ((ready_scans_number) && (!is_running)) {
         // It occurs only when total_duration_ is non zero (for finite scan)
-        if (!total_duration_) {
+        if (!total_duration_s_) {
             throw common::AssertionError("Device is not running and has data, but does not have total_duration");
         }
         // We gave all the data and now can switch state to CanSet
@@ -205,9 +212,9 @@ void DaqboardDevice::prepareDeviceRead() {
     //2. Configuring Acquisition Events - How Should the Acquisition Start and Stop? (stop is actually configured in set_**_voltage)
     daqSetTriggerEvent(handle_, DatsSoftware, (DaqEnhTrigSensT)NULL, 0, (DaqAdcGain)0, 0, DaqTypeAnalogLocal, 0.0, 0.0,
         DaqStartEvent);
-    if (total_duration_ > 0) {
+    if (total_duration_s_ > 0) {
         // Configuring stop event at N scans
-        auto scans_number = (timer_.unitsToMilliseconds(total_duration_) / 1000) * sampling_frequency_hz_;
+        auto scans_number = total_duration_s_ * sampling_frequency_hz_;
         daqAdcSetAcq(handle_, DaamNShot, 0, scans_number);
         daqSetTriggerEvent(handle_, DatsScanCount, (DaqEnhTrigSensT)NULL, 0, (DaqAdcGain)0, 0, DaqTypeAnalogLocal, 0.0,
             0.0, DaqStopEvent);
@@ -256,19 +263,17 @@ void DaqboardDevice::prepareChannelWrite(common::ControlKey key) {
     //2.
     daqDacWaveSetClockSource(handle_, DddtLocal, channel_number, DdcsDacClock); //DdcsDacClock
     //3.
-    if (profile_length_ == 0) {
+    if (profile_length_s_ == 0) {
         throw common::DeviceError("Profile length must be greater than zero");
     }
-    double profile_length_s = timer_.unitsToMilliseconds(profile_length_) / 1000;
-    double dac_frequency_hz = double(buffer.size()) / profile_length_s;
+    double dac_frequency_hz = double(buffer.size()) / profile_length_s_;
     daqDacWaveSetFreq(handle_, DddtLocal, channel_number, dac_frequency_hz);
     //4.
     bool ignored_param = true; // or false, doesn't matter, blame DaqBoard API
     daqDacWaveSetTrig(handle_, DddtLocal, channel_number, DdtsSoftware, ignored_param);
     //5.
-    if (total_duration_ > 0) {
-        double total_duration_s = timer_.unitsToMilliseconds(total_duration_) / 1000;
-        DWORD update_count = dac_frequency_hz * total_duration_s;
+    if (total_duration_s_ > 0) {
+        DWORD update_count = dac_frequency_hz * total_duration_s_;
         daqDacWaveSetMode(handle_, DddtLocal, channel_number, DdwmNShot, update_count);
     }
     else {
@@ -333,28 +338,63 @@ uint32_t device::DaqboardDevice::getControlChannelId(common::ControlKey key) con
     return control_ids.at(key);
 }
 
-void device::DaqboardDevice::startDevice() {
-    DaqError err;
-    err = daqAdcSoftTrig(handle_);
-    if (err) {
-        throw common::DeviceError("Read trigger error");
+int16_t device::DaqboardDevice::startDevice() noexcept {
+    // To avoid conditional api execution at first all commands
+    // are run, then if anything went wrong device is stopped
+    int16_t err_code = 0;
+    // execute all commands
+    DaqError err_read;
+    DaqError err_write_0;
+    DaqError err_write_1;
+
+    uint32_t channel0;
+    uint32_t channel1; 
+
+    try{
+        channel0 = getControlChannelId(common::ControlKey::Vg);
+        channel1 = getControlChannelId(common::ControlKey::Vm);
     }
-    for (auto pair : profiles_) {
-        err = daqDacWaveSoftTrig(handle_, DddtLocal, getControlChannelId(pair.first));
+    catch (std::runtime_error){
+        // to reduce lag between read and write we have to check it here
+        // method is marked as noexcept
+        return -1000;
     }
-    if (err) {
-        throw common::DeviceError("Write trigger error");
+    {
+        err_read = daqAdcSoftTrig(handle_);
+        err_write_0 = daqDacWaveSoftTrig(
+            handle_, DddtLocal, channel0
+        );
+        err_write_1 = daqDacWaveSoftTrig(
+            handle_, DddtLocal, channel1
+        );
     }
+    // check all results, if any is nonzero - save it;
+    // priority rises from read write to read errors
+    if (err_write_1 != DerrNoError){
+        err_code = err_write_1;
+    }
+    if (err_write_0 != DerrNoError) {
+        err_code = err_write_0;
+    }
+    if (err_read != DerrNoError){
+        err_code = -err_read;
+    }
+  
+    if (err_code != 0) {
+        // turn off everything
+        stopDevice();
+    }
+    return err_code;
 }
 
-void device::DaqboardDevice::stopDevice() {
+void device::DaqboardDevice::stopDevice() noexcept {
     daqDacWaveDisarm(handle_, DddtLocal);
     daqAdcTransferStop(handle_);
     daqAdcDisarm(handle_);
     setChannelsToZero();
 }
 
-void device::DaqboardDevice::setChannelsToZero() {
+void device::DaqboardDevice::setChannelsToZero() noexcept {
     for (auto v : common::ControlKey::_values()) {
         if (v != +common::ControlKey::Undefined) {
             auto id = getControlChannelId(v);
