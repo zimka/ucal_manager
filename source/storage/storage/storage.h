@@ -33,11 +33,13 @@ namespace storage {
         bool reset();
 
         size_t getFrameSize() const;
+        
+        void setFrameSize(size_t frame_size);
 
     private:
         Array data_;
         std::unique_ptr<Frame> head_;
-        size_t const frame_size_;
+        size_t frame_size_;
         bool const enforce_ts_;
         std::string hash_;
         const size_t hash_len_ = 16;

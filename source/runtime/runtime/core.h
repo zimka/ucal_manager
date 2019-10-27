@@ -22,7 +22,7 @@ namespace runtime {
         ~CoreState() override;
         common::MachineState getState() override;
 
-        common::Config const& getConfig() override; 
+        json getConfig() override; 
 
         Plan getPlan() override;
 
@@ -46,7 +46,6 @@ namespace runtime {
         std::thread worker_thread_;
 
         void update();
-
     };
 
     class Worker {

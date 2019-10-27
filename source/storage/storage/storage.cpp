@@ -12,20 +12,24 @@ Storage::Storage(size_t frame_size, bool enforce_ts)
 
 bool Storage::append(Frame&& f) {
     // No checks for keys set of f, it is up to the client
-    // Append consists of 3 stages:
+    // Append consists of 3 stages if frame_size is nonzero:
     // 1. attach new frame to head
     // 2. transfer frame_sized frame from head to data_ if needed
     // 3. update head_ ts
+    // If frame_size is zero frames are appended as-is
     size_t current_size = size();
 
     common::TimeStamp last_ts = f.getTs();
     if (size()) {
         last_ts = data_[size() - 1].getTs();
     }
-    if (head_ != nullptr) {
+    bool has_head = head_ != nullptr;
+    if (has_head && ((head_->getTs().step == f.getTs().step))) {
         last_ts = head_->getTs();
     }
     else {
+        // do not interpolate frames with different sampling
+        finalize();
         head_ = std::make_unique<Frame>(f.getTs());
     }
 
@@ -38,7 +42,11 @@ bool Storage::append(Frame&& f) {
             f.setTs(last_ts);
         }
     }
-    last_ts = f.getTs();
+    if (frame_size_ == 0) {
+        data_.push_back(std::move(f));
+        head_ = nullptr;
+        return true;
+    }
     bool status_ok = head_->attachBack(f);
     if (!status_ok) {
         return false;
@@ -98,6 +106,13 @@ std::string Storage::getHash() const {
 
 size_t Storage::getFrameSize() const {
     return frame_size_;
+}
+
+void Storage::setFrameSize(size_t frame_size){
+    if (!empty()) {
+        throw common::AssertionError("Frame size cannot be changed when storage is not empty");
+    };
+    frame_size_ = frame_size;
 }
 
 bool Storage::reset() {

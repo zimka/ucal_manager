@@ -8,14 +8,17 @@ CoreState::~CoreState() {
 }
 
 void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
-    device->setReadingSampling(block.sampling_step_tu);
+    device->setReadingSampling(block.read_step_tu);
 
     device->setDuration(block.block_len_tu);
-    if ((block.guard.size() || block.mod.size())) {
+    if ((block.voltage_0.size() || block.voltage_1.size())) {
+        if (block.voltage_0.size() != block.voltage_1.size()) {
+            throw common::DeviceError("Different sizes for voltages");
+        }
         device->setProfiles({
-            {common::ControlKey::Vg, block.guard},
-            {common::ControlKey::Vm, block.mod},
-            }, block.pattern_len_tu);
+            {common::ControlKey::Vg, block.voltage_0},
+            {common::ControlKey::Vm, block.voltage_1},
+            }, block.write_step_tu * block.voltage_0.size());
     }
     device->prepare();
 }
@@ -33,9 +36,21 @@ common::MachineState CoreState::getState() {
     throw common::AssertionError("getState method call was delegated to CoreState");
 }
 
-common::Config const& CoreState::getConfig() {
+json CoreState::getConfig() {
     update();
-    return *common::acquireConfig();
+    auto& config = *common::acquireConfig();
+    json dump;
+    for (common::ConfigDoubleKey k : common::ConfigDoubleKey::_values()) {
+        if ( k != +common::ConfigDoubleKey::Undefined){
+            dump[k._to_string()] = config.readDouble(k);
+        }
+    }
+    for (common::ConfigStringKey k : common::ConfigStringKey ::_values()) {
+        if ( k != +common::ConfigStringKey ::Undefined){
+            dump[k._to_string()] = config.readStr(k);
+        }
+    }
+    return dump;
 }
 
 Plan CoreState::getPlan() {
@@ -64,12 +79,19 @@ void CoreState::setPlan(Plan plan) {
 
     plan_ = plan;
     storage_.reset();
+    storage_.setFrameSize(
+        common::acquireConfig()->readDouble(common::ConfigDoubleKey::StorageFrameSize)
+    );
     // Drop old data if it is somehow still there
     data_queue_ = FrameQueue();
 }
 
 void CoreState::setConfig(json const& json_data){
     auto config = common::acquireConfig();
+    if (! json_data.size()) {
+        config->reset();
+        return;
+    }
     auto it = json_data.begin();
     while (it != json_data.end()) {
         std::string error_msg = "Invalid config: " + json_data.dump();
