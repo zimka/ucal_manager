@@ -93,6 +93,9 @@ TEST_CASE("Keys") {
 }
 
 TEST_CASE("Config") {
+    ConfigPtr start = acquireConfig();
+    start->reset();
+
     SECTION("Doubles") {
         ConfigPtr mock = acquireConfig();
         double value = 10.11;

@@ -225,7 +225,6 @@ void Worker::doStep() {
         }
 
         loadBlock(device_, plan_.at(master_block_ind));
-        std::cout << device_->getSetup() << std::endl;
         device_->run();
         worker_block_ind_ = master_block_ind;
     }

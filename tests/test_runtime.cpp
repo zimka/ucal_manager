@@ -82,20 +82,6 @@ TEST_CASE("StateMachine") {
             {110, 120, 130, 140,},
     };
 
-    SECTION("NotReady") {
-        StateMachine machine;
-        machine.setState(createState<MachineState::NotReady>(&machine));
-
-        REQUIRE(machine.getState()._value == MachineState::NotReady);
-        REQUIRE_THROWS(machine.getConfig());
-        REQUIRE_THROWS(machine.getPlan());
-        //REQUIRE_THROWS(machine.getData()); TODO: rewrite
-        //REQUIRE_THROWS(machine.SetConfig()); TODO: rewrite
-        REQUIRE_THROWS(machine.setPlan(Plan()));
-        REQUIRE_THROWS(machine.runNext());
-        REQUIRE_THROWS(machine.stop());
-    }
-
     SECTION("Error") {
         StateMachine machine;
         machine.setState(createState<MachineState::Error>(&machine));
@@ -156,8 +142,8 @@ TEST_CASE("StateMachine") {
     SECTION("Executing") {
         StateMachine machine;
         Plan empty;
-        Plan non_empty = { block2 , block1};
-        machine.setState(createState<MachineState::NoPlan>(&machine));
+        Plan non_empty = { block2 , block2};
+        REQUIRE(machine.getState()._value == MachineState::NoPlan);
         REQUIRE_NOTHROW(machine.setPlan(non_empty));
         REQUIRE(machine.getState()._value == MachineState::HasPlan);
         REQUIRE(machine.getPlan() == non_empty);
@@ -170,14 +156,14 @@ TEST_CASE("StateMachine") {
 
         // TODO: complex behaviour: run next block, if current block is infinite, else throw exception
         REQUIRE_NOTHROW(machine.runNext()); // Switch from infinite to finite
-        Plan tail = {block1};
+        Plan tail = {block2};
+        REQUIRE(machine.getState()._value == MachineState::Executing);
         REQUIRE(machine.getPlan() == tail);
         //REQUIRE(machine.getState()._value == MachineState::HasPlan);
         REQUIRE_NOTHROW(machine.getConfig());
         //REQUIRE_THROWS(machine.getData()); TODO: rewrite TODO: must return data already collected
         //REQUIRE_THROWS(machine.SetConfig()); TODO: rewrite
-        //REQUIRE_NOTHROW(machine.stop());
-        testSleep(200);
+        REQUIRE_NOTHROW(machine.stop());
         REQUIRE(machine.getState() == +MachineState::HasPlan); // FIXME: also unstable
     }
 }

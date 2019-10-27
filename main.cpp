@@ -73,8 +73,8 @@ int main_run(){
         std::cout << n << ") Collected: " << stor.size() << "; ";
         std::cout << stamp.repr() << "|"<< ms << std::endl;
         if (n == 9) {
-            //machine.runNext();
-            //std::cout << "Run Next!" << std::endl;
+            machine.runNext();
+            std::cout << "Run Next!" << std::endl;
         }
         dumpData(machine.getData(), common::TimeStamp(0, 0));
         not_finished = (machine.getState() == +common::MachineState::Executing);
