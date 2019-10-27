@@ -8,8 +8,7 @@
 #include <json/single_include/nlohmann/json.hpp>
 #include <storage/storage.h>
 
-#include <device/acquire.h>
-#include <runtime/core.h>
+#include <device/device.h>
 
 
 runtime::Plan readPlan(std::string filename) {

@@ -11,5 +11,9 @@ set(SOURCES
 )
 
 add_library(runtime ${HEADERS} ${SOURCES})
-target_link_libraries(runtime PUBLIC common device storage)
+if (USE_REAL_DEVICE)
+    target_link_libraries(runtime PUBLIC common device_real storage)
+else()
+    target_link_libraries(runtime PUBLIC common device_mock storage)
+endif()
 target_include_directories(runtime PUBLIC .)

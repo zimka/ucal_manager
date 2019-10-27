@@ -5,7 +5,7 @@
 #include "state_machine.h"
 #include "core.h"
 #include <common/exceptions.h>
-#include <device/acquire.h>
+#include <device/device.h>
 
 #include <sstream>
 //#include <thread>

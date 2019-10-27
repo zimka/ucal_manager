@@ -3,7 +3,6 @@
 #include "i_state.h"
 #include "block.h"
 #include <device/device.h>
-#include <device/acquire.h>
 #include <readerwriterqueue/readerwriterqueue.h>
 #include <thread>
 #include <atomic>

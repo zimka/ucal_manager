@@ -8,7 +8,6 @@
 #include <common/utils.h>
 #include <device/timer.h>
 #include <device/device.h>
-#include <device/acquire.h>
 #include <storage/frame.h>
 
 using namespace device;
