@@ -1,5 +1,5 @@
 set(H_LIST
-    device/timer.h device/device.h device/acquire.h
+    device/timer.h device/device.h
 )
 set(CPP_LIST
     device/timer.cpp
