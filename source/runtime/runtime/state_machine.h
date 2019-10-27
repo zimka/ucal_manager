@@ -6,12 +6,7 @@
 #define UCAL_MANAGER_STATE_MACHINE_H
 
 #include "i_state.h"
-#include <common/config.h>
 #include <device/device.h>
-#include <storage/storage.h>
-#include <better_enums/enum.h>
-#include <json/include/nlohmann/json_fwd.hpp>
-#include <memory>
 #include <thread>
 
 namespace runtime {

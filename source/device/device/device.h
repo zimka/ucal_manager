@@ -1,15 +1,9 @@
 #ifndef UCAL2_DEVICE_DEVICE_H
 #define UCAL2_DEVICE_DEVICE_H
 
-#include "common/measures.h"
-#include "common/keys.h"
-#include "better_enums/enum.h"
 #include "storage/frame.h"
 #include "timer.h"
-#include <stdint.h>
-#include <vector>
 #include <map>
-#include <string>
 
 
 namespace device {

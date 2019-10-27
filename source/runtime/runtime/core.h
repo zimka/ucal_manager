@@ -1,12 +1,10 @@
 #ifndef UCAL_MANAGER_RUNTIME_CORE_H
 #define UCAL_MANAGER_RUNTIME_CORE_H
 #include "i_state.h"
-#include "block.h"
 #include <device/device.h>
 #include <readerwriterqueue/readerwriterqueue.h>
 #include <thread>
 #include <atomic>
-#include <stdint.h>
 
 namespace runtime {
     /*

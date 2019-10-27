@@ -1,7 +1,6 @@
 #ifndef UCAL2_STORAGE_STORAGE_H
 #define UCAL2_STORAGE_STORAGE_H
 
-#include "common/timestamp.h"
 #include "frame.h"
 
 namespace storage {

@@ -1,14 +1,10 @@
 #include <utility>
 #include <sstream>
 #include <catch2/catch.hpp>
-#include <chrono>
 #include <thread>
-#include <common/timestamp.h>
 #include <common/config.h>
 #include <common/utils.h>
-#include <device/timer.h>
 #include <device/device.h>
-#include <storage/frame.h>
 
 using namespace device;
 using namespace common;
