@@ -2,7 +2,6 @@
 #define UCAL2_DEVICE_TIMER_H
 
 #include <chrono>
-#include "common/measures.h"
 #include "common/timestamp.h"
 
 #include <memory>

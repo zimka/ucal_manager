@@ -4,6 +4,10 @@
 
 using namespace device;
 
+std::unique_ptr<IDevice> device::acquireDevice() {
+    return std::make_unique<MockDevice>();
+}
+
 MockDevice::MockDevice(std::string name) :timer_(1) {};
 
 void MockDevice::setProfiles(const ProfileSetup&, common::TimeUnit profile_length) {

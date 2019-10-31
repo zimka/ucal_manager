@@ -11,6 +11,9 @@ using namespace device;
 using nlohmann::json;
 
 //====================PUBLIC====================
+std::unique_ptr<IDevice> device::acquireDevice() {
+    return std::make_unique<DaqboardDevice>();
+}
 
 DaqboardDevice::DaqboardDevice(std::string name) : timer_(DEFAULT_DAQBOARD_TIMER_STEP_TU) {
     daqSetDefaultErrorHandler(0); // no error handling from DaqX, handle them manually
