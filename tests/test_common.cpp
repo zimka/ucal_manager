@@ -6,6 +6,7 @@
 #include "common/keys.h"
 #include "common/config.h"
 #include "common/exceptions.h"
+#include "common/logger.h"
 
 using namespace common;
 
@@ -135,3 +136,69 @@ TEST_CASE("Config") {
     }
 }
 
+TEST_CASE("Logger") {
+    SECTION("AllTogether") {
+        std::string contents;
+        std::stringstream stream;
+        stream << "This is the first message" << std::endl << "And this is the second message!" << std::endl;
+        {
+            LoggerPtr logger = createLogger("test_log.txt");
+            logger->clean();
+            logger->log("This is the first message");
+            logger->log("And this is the second message!");
+            contents = logger->getAll();
+        }
+        REQUIRE(contents == stream.str());
+    }
+
+    SECTION("CloseAndAppend") {
+        std::string contents;
+        std::stringstream stream;
+        stream << "This is the first message" << std::endl << "And this is the second message!" << std::endl;
+        {
+            LoggerPtr logger = createLogger("test_log.txt");
+            logger->clean();
+            logger->log("This is the first message");
+        }
+        {
+            LoggerPtr logger = createLogger("test_log.txt");
+            logger->log("And this is the second message!");
+            contents = logger->getAll();
+        }
+        REQUIRE(contents == stream.str());
+    }
+
+    SECTION("FromStream") {
+        std::string contents;
+        std::stringstream stream;
+        stream << "This is the first message" << std::endl << "And this is the second message!";
+        {
+            LoggerPtr logger = createLogger("test_log.txt");
+            logger->clean();
+            logger->log(stream);
+        }
+        {
+            LoggerPtr logger = createLogger("test_log.txt");
+            contents = logger->getAll();
+        }
+        stream << std::endl;
+        REQUIRE(contents == stream.str());
+    }
+
+    SECTION("WithTime") {
+        std::string contents;
+        std::stringstream stream;
+        stream << "This is the first message" << std::endl << "And this is the second message!" << std::endl;
+        {
+            LoggerPtr logger = createLogger("test_log.txt");
+            logger->clean();
+            logger->withTime("This is the first message");
+        }
+        {
+            LoggerPtr logger = createLogger("test_log.txt");
+            logger->withTime("And this is the second message!");
+            contents = logger->getAll();
+        }
+        REQUIRE(!contents.empty());
+    }
+}
