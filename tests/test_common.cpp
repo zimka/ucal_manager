@@ -94,11 +94,11 @@ TEST_CASE("Keys") {
 }
 
 TEST_CASE("Config") {
-    ConfigPtr start = acquireConfig();
+    ConfigPtr start = acquireConfig("test_config.json");
     start->reset();
 
     SECTION("Doubles") {
-        ConfigPtr mock = acquireConfig();
+        ConfigPtr mock = acquireConfig("test_config.json");
         double value = 10.11;
         REQUIRE_NOTHROW(mock->readDouble(ConfigDoubleKey::StorageFrameSize));
         CHECK(mock->write(ConfigDoubleKey::StorageFrameSize, value));
@@ -107,14 +107,14 @@ TEST_CASE("Config") {
     }
 
     SECTION("Strings") {
-        ConfigPtr mock = acquireConfig();
+        ConfigPtr mock = acquireConfig("test_config.json");
         std::string value = "WeirdId";
         REQUIRE(mock->write(ConfigStringKey::BoardId, value));
         REQUIRE(mock->readStr(ConfigStringKey::BoardId) == value);
     }
 
     SECTION("Defaults") {
-        ConfigPtr mock = acquireConfig();
+        ConfigPtr mock = acquireConfig("test_config.json");
         double value = mock->readDouble(ConfigDoubleKey::StorageFrameSize);
         double new_value = value + 1.1;
         mock->write(ConfigDoubleKey::StorageFrameSize, new_value);
@@ -126,11 +126,11 @@ TEST_CASE("Config") {
     SECTION("Recreation") {
         double value = 10.1;
         {
-            ConfigPtr first = acquireConfig();
+            ConfigPtr first = acquireConfig("test_config.json");
             first->write(ConfigDoubleKey::StorageFrameSize, value);
         }
         {
-            ConfigPtr second = acquireConfig();
+            ConfigPtr second = acquireConfig("test_config.json");
             REQUIRE(second->readDouble(ConfigDoubleKey::StorageFrameSize) == value);
         }
     }
