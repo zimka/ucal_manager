@@ -13,10 +13,9 @@ class Logger : public ILogger
 public:
     explicit Logger(std::string filename);
 
-    void log(char const* message) override;
-    void log(std::stringstream const&) override;
-    void withTime(char const* message) override;
+    void log(std::string const& message) override;
     std::string getAll() override;
+    std::vector<std::string> getLines() override;
     void clean() override;
 
 private:
@@ -29,7 +28,7 @@ LoggerPtr createLogger(std::string filename) {
     return std::make_shared<Logger>(std::move(filename));
 }
 
-// Careful! Success of construction depends on order!
+// Careful! logFile_ must be initialized in the first place
 Logger::Logger(std::string filename)
     : logFile_(filename, std::ios::in | std::ios::app)
     , filename_(std::move(filename))
@@ -38,22 +37,11 @@ Logger::Logger(std::string filename)
         throw std::runtime_error("Cannot open file!");
 }
 
-void Logger::log(char const* message) {
+void Logger::log(std::string const& message) {
     std::lock_guard<std::mutex> guard (lock_);
-    logFile_ << message << std::endl;
-}
-
-void Logger::log(std::stringstream const& message_stream) {
-    std::lock_guard<std::mutex> guard (lock_);
-    logFile_ << message_stream.rdbuf() << std::endl;
-}
-
-void Logger::withTime(char const* message) {
     using std::chrono::system_clock;
     auto now = system_clock::to_time_t(system_clock::now());
-    std::stringstream stream;
-    stream << std::put_time(std::localtime(&now), "%F %T") << " | " << message;
-    log(stream);
+    logFile_ << std::put_time(std::localtime(&now), "%F %T") << '|' << message << std::endl;
 }
 
 std::string Logger::getAll() {
@@ -65,6 +53,17 @@ std::string Logger::getAll() {
     logFile_.seekg(0);
     logFile_.read(&content[0], content.size());
     return content;
+}
+
+std::vector<std::string> Logger::getLines() {
+    std::lock_guard<std::mutex> guard (lock_);
+    logFile_.seekg(0);
+    std::vector<std::string> result;
+    for (std::string line; std::getline(logFile_, line); )
+    {
+        result.push_back(line);
+    }
+    return result;
 }
 
 void Logger::clean() {

@@ -6,13 +6,13 @@
 #define UCAL_MANAGER_LOGGER_H
 
 #include <memory>
+#include <vector>
 
 class ILogger {
 public:
-    virtual void log(char const* message) = 0;
-    virtual void log(std::stringstream const& message_stream) = 0;
-    virtual void withTime(char const* message) = 0;
+    virtual void log(std::string const& message) = 0;
     virtual std::string getAll() = 0;
+    virtual std::vector<std::string> getLines() = 0;
     virtual void clean() = 0;
 };
 
