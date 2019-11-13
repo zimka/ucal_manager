@@ -136,6 +136,16 @@ TEST_CASE("Config") {
     }
 }
 
+void filterTime(std::string& contents) {
+    std::string::iterator curr = contents.begin();
+    std::string::iterator delim = std::find(curr, contents.end(), '|');
+    do {
+        contents.erase(curr, delim + 1);
+        curr = std::find(curr, contents.end(), '\n') + 1;
+        delim = std::find(curr, contents.end(), '|');
+    } while(delim != contents.end());
+}
+
 TEST_CASE("Logger") {
     SECTION("LineByLine") {
         std::vector<std::string> contents;
@@ -154,7 +164,6 @@ TEST_CASE("Logger") {
                 line.erase(0, sep);
             }
         }
-        //REQUIRE((contents[0] == messages[0] && contents[1] == messages[1]));
         REQUIRE(contents == messages);
     }
 
@@ -170,15 +179,8 @@ TEST_CASE("Logger") {
             logger->log(messages[0]);
             logger->log(messages[1]);
             contents = logger->getAll();
-            size_type curr = 0;
-            std::string::iterator delim = contents.find('|', curr);
-            do {
-                contents.erase(curr, delim + 1 - curr);
-                curr = contents.find('\n', curr) + 1;
-                delim = contents.find('|', curr);
-            } while(delim != std::string::npos);
+            filterTime(contents);
         }
-        //REQUIRE((contents[0] == messages[0] && contents[1] == messages[1]));
         std::stringstream temp;
         for (auto& line : messages)
         {
@@ -187,54 +189,28 @@ TEST_CASE("Logger") {
         REQUIRE(contents == temp.str());
     }
 
-    /*SECTION("CloseAndAppend") {
+    SECTION("CloseAndAppend") {
         std::string contents;
-        std::stringstream stream;
-        stream << "This is the first message" << std::endl << "And this is the second message!" << std::endl;
+        std::vector<std::string> messages = {
+                std::string("This is the first message"),
+                std::string("And this is the second message!")
+        };
         {
             LoggerPtr logger = createLogger("test_log.txt");
             logger->clean();
-            logger->log("This is the first message");
+            logger->log(messages[0]);
         }
         {
             LoggerPtr logger = createLogger("test_log.txt");
-            logger->log("And this is the second message!");
+            logger->log(messages[1]);
             contents = logger->getAll();
         }
-        REQUIRE(contents == stream.str());
+        filterTime(contents);
+        std::stringstream temp;
+        for (auto& line : messages)
+        {
+            temp << line << std::endl;
+        }
+        REQUIRE(contents == temp.str());
     }
-
-    SECTION("FromStream") {
-        std::string contents;
-        std::stringstream stream;
-        stream << "This is the first message" << std::endl << "And this is the second message!";
-        {
-            LoggerPtr logger = createLogger("test_log.txt");
-            logger->clean();
-            logger->log(stream);
-        }
-        {
-            LoggerPtr logger = createLogger("test_log.txt");
-            contents = logger->getAll();
-        }
-        stream << std::endl;
-        REQUIRE(contents == stream.str());
-    }
-
-    SECTION("WithTime") {
-        std::string contents;
-        std::stringstream stream;
-        stream << "This is the first message" << std::endl << "And this is the second message!" << std::endl;
-        {
-            LoggerPtr logger = createLogger("test_log.txt");
-            logger->clean();
-            logger->withTime("This is the first message");
-        }
-        {
-            LoggerPtr logger = createLogger("test_log.txt");
-            logger->withTime("And this is the second message!");
-            contents = logger->getAll();
-        }
-        REQUIRE(!contents.empty());
-    }*/
 }

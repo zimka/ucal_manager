@@ -19,5 +19,4 @@ public:
 using LoggerPtr = std::shared_ptr<ILogger>;
 
 LoggerPtr createLogger(std::string filename);
-//class Logger;
 #endif //UCAL_MANAGER_LOGGER_H
