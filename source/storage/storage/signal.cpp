@@ -117,3 +117,13 @@ SignalValue SignalData::operator[](size_t pos) const {
 void SignalData::swap(SignalData& other) {
     data_.swap(other.data_);
 }
+
+SignalData::Iterator SignalData::begin() const
+{
+  return data_->begin();
+}
+
+SignalData::Iterator SignalData::end() const
+{
+  return data_->end();
+}

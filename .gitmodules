@@ -10,3 +10,7 @@
 [submodule "third_party/readerwriterqueue"]
 	path = third_party/readerwriterqueue
 	url = https://github.com/cameron314/readerwriterqueue.git
+[submodule "source/service/third_party/grpc"]
+	path = third_party/grpc
+	url = https://github.com/grpc/grpc
+    branch = "v1.23.0"

@@ -8,14 +8,17 @@
 #include <memory>
 #include <vector>
 
-class ILogger {
-public:
+namespace common {
+  class ILogger {
+  public:
     virtual void log(std::string const& message) = 0;
     virtual std::vector<std::string> getLines() = 0;
     virtual void clean() = 0;
-};
+  };
 
-using LoggerPtr = std::shared_ptr<ILogger>;
+  using LoggerPtr = std::shared_ptr<ILogger>;
 
-LoggerPtr createLogger(std::string filename);
+  LoggerPtr createLogger(std::string filename);
+  LoggerPtr createDefault();
+}
 #endif //UCAL_MANAGER_LOGGER_H
