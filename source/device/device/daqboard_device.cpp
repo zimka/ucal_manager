@@ -11,8 +11,13 @@ using namespace device;
 using nlohmann::json;
 
 //====================PUBLIC====================
-std::unique_ptr<IDevice> device::acquireDevice() {
-    return std::make_unique<DaqboardDevice>();
+std::unique_ptr<IDevice> device::acquireDevice(std::string name) {
+    if (!name.size()) {
+        return std::make_unique<DaqboardDevice>();
+    }
+    else {
+        return std::make_unique<DaqboardDevice>(name);
+    }
 }
 
 DaqboardDevice::DaqboardDevice(std::string name) : timer_(DEFAULT_DAQBOARD_TIMER_STEP_TU) {
@@ -269,14 +274,25 @@ void DaqboardDevice::prepareChannelWrite(common::ControlKey key) {
     if (profile_length_s_ == 0) {
         throw common::DeviceError("Profile length must be greater than zero");
     }
-    double dac_frequency_hz = double(buffer.size()) / profile_length_s_;
-    daqDacWaveSetFreq(handle_, DddtLocal, channel_number, dac_frequency_hz);
+    float dac_frequency_hz_target = float(buffer.size()) / profile_length_s_;
+    daqDacWaveSetFreq(handle_, DddtLocal, channel_number, dac_frequency_hz_target);
+    float dac_frequency_hz_result = 0;
+    daqDacWaveGetFreq(handle_, DddtLocal, channel_number, &dac_frequency_hz_result);
+    float diff = dac_frequency_hz_result - dac_frequency_hz_target;
+    if (diff < 0) {
+        diff = -diff;
+    }
+    if (diff / dac_frequency_hz_target > 0.001) {
+        std::string msg = "Can't assign freq " + std::to_string(dac_frequency_hz_target);
+        msg += "; probably frequency is too low";
+        throw common::DeviceError(msg);
+    }
     //4.
     bool ignored_param = true; // or false, doesn't matter, blame DaqBoard API
     daqDacWaveSetTrig(handle_, DddtLocal, channel_number, DdtsSoftware, ignored_param);
     //5.
     if (total_duration_s_ > 0) {
-        DWORD update_count = dac_frequency_hz * total_duration_s_;
+        DWORD update_count = dac_frequency_hz_result * total_duration_s_ + 1;
         daqDacWaveSetMode(handle_, DddtLocal, channel_number, DdwmNShot, update_count);
     }
     else {
@@ -346,9 +362,9 @@ int16_t device::DaqboardDevice::startDevice() noexcept {
     // are run, then if anything went wrong device is stopped
     int16_t err_code = 0;
     // execute all commands
-    DaqError err_read;
-    DaqError err_write_0;
-    DaqError err_write_1;
+    DaqError err_read = DerrNoError;
+    DaqError err_write_0 = DerrNoError;
+    DaqError err_write_1 = DerrNoError;
 
     uint32_t channel0;
     uint32_t channel1; 
@@ -364,12 +380,14 @@ int16_t device::DaqboardDevice::startDevice() noexcept {
     }
     {
         err_read = daqAdcSoftTrig(handle_);
-        err_write_0 = daqDacWaveSoftTrig(
-            handle_, DddtLocal, channel0
-        );
-        err_write_1 = daqDacWaveSoftTrig(
-            handle_, DddtLocal, channel1
-        );
+        if (profiles_.size()){
+            err_write_0 = daqDacWaveSoftTrig(
+                handle_, DddtLocal, channel0
+            );
+            err_write_1 = daqDacWaveSoftTrig(
+                handle_, DddtLocal, channel1
+            );
+        }
     }
     // check all results, if any is nonzero - save it;
     // priority rises from read write to read errors

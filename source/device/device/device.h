@@ -158,6 +158,6 @@ namespace device {
      * Factory function to acquire needed device, depending on library linked
      * @return pointer to newly created(!) device instance
      */
-    std::unique_ptr<IDevice> acquireDevice();
+    std::unique_ptr<IDevice> acquireDevice(std::string name="");
 }
 #endif//UCAL2_DEVICE_DEVICE_H

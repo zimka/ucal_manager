@@ -7,6 +7,18 @@ CoreState::~CoreState() {
     stop();
 }
 
+std::unique_ptr<device::IDevice> acquireConfiguredDevice() {
+    auto config_ptr = common::acquireConfig();
+    auto dev_ptr = device::acquireDevice(
+        config_ptr->readStr(common::ConfigStringKey::BoardId)
+    );
+    device::DeviceTimer timer(1);
+    timer.reconfigure(common::acquireConfig());
+    dev_ptr->setTimer(timer);
+    return std::move(dev_ptr);
+}
+
+
 void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
     device->setReadingSampling(block.read_step_tu);
 
@@ -24,7 +36,7 @@ void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
 }
 
 void validatePlan(Plan plan) {
-    auto device = device::acquireDevice();
+    auto device = acquireConfiguredDevice();
     for (auto block : plan) {
         loadBlock(device, block);
         device->stop();
@@ -192,7 +204,7 @@ void CoreState::update() {
 }
 
 Worker::Worker(std::atomic<int8_t>* master_block_ind, FrameQueue * queue, Plan plan) : global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {
-    device_ = device::acquireDevice();
+    device_ = acquireConfiguredDevice();
     worker_block_ind_ = -1;
 }
 
