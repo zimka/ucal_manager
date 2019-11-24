@@ -6,6 +6,7 @@
 #include "common/keys.h"
 #include "common/config.h"
 #include "common/exceptions.h"
+#include "common/logger.h"
 
 using namespace common;
 
@@ -93,11 +94,11 @@ TEST_CASE("Keys") {
 }
 
 TEST_CASE("Config") {
-    ConfigPtr start = acquireConfig();
+    ConfigPtr start = acquireConfig("test_config.json");
     start->reset();
 
     SECTION("Doubles") {
-        ConfigPtr mock = acquireConfig();
+        ConfigPtr mock = acquireConfig("test_config.json");
         double value = 10.11;
         REQUIRE_NOTHROW(mock->readDouble(ConfigDoubleKey::StorageFrameSize));
         CHECK(mock->write(ConfigDoubleKey::StorageFrameSize, value));
@@ -106,14 +107,14 @@ TEST_CASE("Config") {
     }
 
     SECTION("Strings") {
-        ConfigPtr mock = acquireConfig();
+        ConfigPtr mock = acquireConfig("test_config.json");
         std::string value = "WeirdId";
         REQUIRE(mock->write(ConfigStringKey::BoardId, value));
         REQUIRE(mock->readStr(ConfigStringKey::BoardId) == value);
     }
 
     SECTION("Defaults") {
-        ConfigPtr mock = acquireConfig();
+        ConfigPtr mock = acquireConfig("test_config.json");
         double value = mock->readDouble(ConfigDoubleKey::StorageFrameSize);
         double new_value = value + 1.1;
         mock->write(ConfigDoubleKey::StorageFrameSize, new_value);
@@ -125,13 +126,44 @@ TEST_CASE("Config") {
     SECTION("Recreation") {
         double value = 10.1;
         {
-            ConfigPtr first = acquireConfig();
+            ConfigPtr first = acquireConfig("test_config.json");
             first->write(ConfigDoubleKey::StorageFrameSize, value);
         }
         {
-            ConfigPtr second = acquireConfig();
+            ConfigPtr second = acquireConfig("test_config.json");
             REQUIRE(second->readDouble(ConfigDoubleKey::StorageFrameSize) == value);
         }
     }
 }
 
+void filterTime(std::string& contents) {
+    std::string::iterator curr = contents.begin();
+    std::string::iterator delim = std::find(curr, contents.end(), '|');
+    do {
+        contents.erase(curr, delim + 1);
+        curr = std::find(curr, contents.end(), '\n') + 1;
+        delim = std::find(curr, contents.end(), '|');
+    } while(delim != contents.end());
+}
+
+TEST_CASE("Logger") {
+    SECTION("LineByLine") {
+        std::vector<std::string> contents;
+        std::vector<std::string> messages = {
+            std::string("This is the first message"),
+            std::string("And this is the second message!")
+        };
+        {
+            LoggerPtr logger = createLogger("test_log.txt");
+            logger->clean();
+            logger->log(messages[0]);
+            logger->log(messages[1]);
+            contents = logger->getLines();
+            for (auto& line : contents) {
+                auto sep = line.find('|') + 1;
+                line.erase(0, sep);
+            }
+        }
+        REQUIRE(contents == messages);
+    }
+}

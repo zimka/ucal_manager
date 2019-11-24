@@ -22,6 +22,8 @@ namespace common {
 
         Config();
 
+        explicit Config(std::string const& filename);
+
         ~Config();
 
         bool write(ConfigStringKey key, const std::string& value);
@@ -36,11 +38,13 @@ namespace common {
 
     private:
         ConfigDataPtr data;
+        std::string override_filename;
     };
 
     using ConfigPtr = std::shared_ptr<Config>;
 
     ConfigPtr acquireConfig();
+    ConfigPtr acquireConfig(std::string const& filename);
 
 }
 

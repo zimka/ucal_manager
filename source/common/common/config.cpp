@@ -25,32 +25,48 @@ namespace common {
         static ConfigPtr instance = std::make_shared<Config>();
         return instance;
     }
+
+    ConfigPtr acquireConfig(std::string const& filename) {
+        static ConfigPtr instance = std::make_shared<Config>(filename);
+        return instance;
+    }
 }
 
-static void write_file(const char* filename, const json& data) {
+static void write_file(std::string const& filename, const json& data) {
     std::ofstream file(filename);
     file << data; // dump overriden config
 }
 
 Config::Config()
-        : data(std::make_unique<ConfigData>()) {
+    : data(std::make_unique<ConfigData>())
+    , override_filename(FILENAME)
+{
     std::ifstream file(FILENAME);
-    std::stringstream content_s;
-    content_s << file.rdbuf();
-    if (!content_s.str().empty()) {
-        data->over = json::parse(content_s.str());
+    if (file.is_open()) {
+        data->over = json::parse(file);
+    }
+    data->def = json::parse(DEFAULT);
+}
+
+Config::Config(std::string const& filename)
+    : data(std::make_unique<ConfigData>())
+    , override_filename(filename)
+{
+    std::ifstream file(filename);
+    if (file.is_open()) {
+        data->over = json::parse(file);
     }
     data->def = json::parse(DEFAULT);
 }
 
 Config::~Config() {
-    write_file(FILENAME, data->over);
+    write_file(override_filename, data->over);
 }
 
 bool Config::write(common::ConfigStringKey key, std::string const& value) {
     if (!IMMUTABLE.exchange(true)) {
         data->over[key._to_string()] = value; // TODO: type check?
-        write_file(FILENAME, data->over);
+        write_file(override_filename, data->over);
     }
     else {
         throw AssertionError("Config simultaneous writing!");
@@ -62,7 +78,7 @@ bool Config::write(common::ConfigStringKey key, std::string const& value) {
 bool Config::write(common::ConfigDoubleKey key, double value) {
     if (!IMMUTABLE.exchange(true)) {
         data->over[key._to_string()] = value; // TODO: type check?
-        write_file(FILENAME, data->over);
+        write_file(override_filename, data->over);
     }
     else {
         throw AssertionError("Config simultaneous writing!");
