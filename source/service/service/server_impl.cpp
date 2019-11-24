@@ -46,7 +46,8 @@ namespace service {
             return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, err.what());
         } catch (common::FatalError& err) {
             return grpc::Status(grpc::StatusCode::INTERNAL, err.what());
-        } catch (...) {
+        } catch (const std::exception& e) {
+            std::cout << "FATAL: " << e.what() << std::endl;
             return grpc::Status(grpc::StatusCode::UNKNOWN, "Something really unexpected happened");
         }
     }
@@ -96,6 +97,9 @@ namespace service {
                 timeMsg->set_count(timestamp.count);
                 auto* data = message.mutable_data();
                 for (auto& key : common::SignalKey::_values()) {
+                    if (key == +common::SignalKey::Undefined) {
+                        continue;
+                    }
                     auto& signalData = frame[key];
                     FrameMsg_SignalData signalDataMsg;
                     for (auto& value : signalData) {
@@ -142,7 +146,6 @@ namespace service {
                 for (int i = 0; i < size; ++i) {
                     block.voltage_1.push_back(message.voltage_1(i));
                 }
-                plan.push_back(block);
             }
             machine.setPlan(std::move(plan));
             return grpc::Status::OK;

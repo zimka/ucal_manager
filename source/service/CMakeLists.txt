@@ -34,7 +34,7 @@ add_custom_command(
 
 add_custom_command(
         OUTPUT ${gen_proto_python} ${gen_grpc_python}
-        COMMAND python3
+        COMMAND python
         ARGS -m grpc_tools.protoc
              -I ${CMAKE_CURRENT_SOURCE_DIR}/service
              -I ${CMAKE_SOURCE_DIR}/third_party/grpc/third_party/protobuf/src/
@@ -51,8 +51,8 @@ add_library(service
         ${gen_proto_hdrs}
         ${gen_grpc_srcs}
         ${gen_grpc_hdrs}
-        ${gen_proto_python}
-        ${gen_grpc_python}
+#        ${gen_proto_python} Use manually
+#        ${gen_grpc_python}
 )
 target_include_directories(service PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(service PUBLIC ./)
