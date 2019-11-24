@@ -11,7 +11,6 @@
 class ILogger {
 public:
     virtual void log(std::string const& message) = 0;
-    virtual std::string getAll() = 0;
     virtual std::vector<std::string> getLines() = 0;
     virtual void clean() = 0;
 };

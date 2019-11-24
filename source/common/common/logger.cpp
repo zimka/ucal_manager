@@ -14,7 +14,6 @@ public:
     explicit Logger(std::string filename);
 
     void log(std::string const& message) override;
-    std::string getAll() override;
     std::vector<std::string> getLines() override;
     void clean() override;
 
@@ -42,17 +41,6 @@ void Logger::log(std::string const& message) {
     using std::chrono::system_clock;
     auto now = system_clock::to_time_t(system_clock::now());
     logFile_ << std::put_time(std::localtime(&now), "%F %T") << '|' << message << std::endl;
-}
-
-std::string Logger::getAll() {
-    std::lock_guard<std::mutex> guard (lock_);
-    std::string content;
-    logFile_.seekg(0, std::ios::end);
-    unsigned size = logFile_.tellg();
-    content.resize(size);
-    logFile_.seekg(0);
-    logFile_.read(&content[0], content.size());
-    return content;
 }
 
 std::vector<std::string> Logger::getLines() {
