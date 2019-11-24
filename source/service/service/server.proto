@@ -1,0 +1,65 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+service Server {
+
+    rpc GetConfig (google.protobuf.Empty) returns (JsonMsg) {}
+
+    rpc GetPlan (google.protobuf.Empty) returns (stream BlockMsg) {}
+
+    rpc GetData (TimeStampMsg) returns (stream FrameMsg) {}
+
+    rpc GetState (google.protobuf.Empty) returns (StateMsg) {}
+
+    rpc SetPlan (stream BlockMsg) returns (OkMsg) {}
+
+    rpc SetConfig (JsonMsg) returns (OkMsg) {}
+
+    rpc RunNext (google.protobuf.Empty) returns (OkMsg) {}
+
+    rpc Stop (google.protobuf.Empty) returns (OkMsg) {}
+
+    rpc GetLogs (google.protobuf.Empty) returns (LogMsg) {}
+
+    rpc DropLogs (google.protobuf.Empty) returns (OkMsg) {}
+}
+
+message JsonMsg {
+    string json = 1;
+}
+
+message BlockMsg {
+    fixed32 write_step_tu = 1;
+    fixed32 block_len_tu = 2;
+    double read_step_tu = 3;
+    repeated sint32 voltage_0 = 4;
+    repeated sint32 voltage_1 = 5;
+}
+
+message TimeStampMsg {
+    // TODO: maybe we need to connect types with TimeStamp implementation somehow
+    fixed32 step = 1;
+    fixed32 count = 2;
+}
+
+message FrameMsg {
+    message SignalData {
+        repeated float data = 1;
+    }
+    map<string, SignalData> data = 1;
+    TimeStampMsg ts = 2;
+    fixed32 size = 3;
+}
+
+message StateMsg {
+    fixed32 code = 1;
+    string name = 2;
+}
+
+message OkMsg {
+    // TODO: maybe we as well use Empty
+}
+
+message LogMsg {
+    repeated string row = 1;
+}

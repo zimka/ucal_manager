@@ -42,6 +42,11 @@ namespace storage {
         ~SignalData() = default;
 
         using Array = std::vector<SignalValue>;
+        using Iterator = Array::const_iterator;
+
+        Iterator begin() const;
+
+        Iterator end() const;
 
     private:
         std::unique_ptr<Array> data_;

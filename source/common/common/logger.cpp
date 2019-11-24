@@ -8,6 +8,8 @@
 #include <sstream>
 #include <iomanip>
 
+using namespace common;
+
 class Logger : public ILogger
 {
 public:
@@ -23,7 +25,7 @@ private:
     std::mutex lock_;
 };
 
-LoggerPtr createLogger(std::string filename) {
+LoggerPtr common::createLogger(std::string filename) {
     return std::make_shared<Logger>(std::move(filename));
 }
 

@@ -9,7 +9,6 @@
 namespace runtime {
 
     struct Block {
-        // TODO: add conversion from json
         Block() = default;
         Block(Block const& other) = default;
         Block& operator=(Block const& other) = default;
