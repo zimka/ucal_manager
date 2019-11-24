@@ -199,16 +199,15 @@ namespace service {
         });
     }
 
-    void RunService () {
-        std::string serverAddress("127.0.0.1:10003");
+    void RunService (std::string const& address_port) {
 
         grpc::ServerBuilder builder;
         ServerImpl service;
 
-        builder.AddListeningPort(serverAddress, grpc::InsecureServerCredentials());
+        builder.AddListeningPort(address_port, grpc::InsecureServerCredentials());
         builder.RegisterService(&service);
         std::unique_ptr<grpc::Server> serverPtr(builder.BuildAndStart());
-        std::cout << "Server listening on " << serverAddress << std::endl;
+        std::cout << "Server listening on " << address_port << std::endl;
         serverPtr->Wait();
     }
 }

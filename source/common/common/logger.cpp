@@ -20,36 +20,46 @@ public:
     void clean() override;
 
 private:
-    std::fstream logFile_;
     std::string filename_;
-    std::mutex lock_;
+    static std::mutex lock_;
 };
+
+std::mutex Logger::lock_;
 
 LoggerPtr common::createLogger(std::string filename) {
     return std::make_shared<Logger>(std::move(filename));
 }
 
+LoggerPtr common::createDefault() {
+    return std::make_shared<Logger>("errors.txt");
+}
+
 // Careful! logFile_ must be initialized in the first place
 Logger::Logger(std::string filename)
-    : logFile_(filename, std::ios::in | std::ios::app)
-    , filename_(std::move(filename))
+    : filename_(std::move(filename))
 {
-    if (!logFile_.is_open())
-        throw std::runtime_error("Cannot open file!");
 }
 
 void Logger::log(std::string const& message) {
     std::lock_guard<std::mutex> guard (lock_);
+    std::fstream logFile (filename_, std::ios::app);
+    if (!logFile.is_open()) {
+        throw std::runtime_error("Cannot open file!");
+    }
     using std::chrono::system_clock;
     auto now = system_clock::to_time_t(system_clock::now());
-    logFile_ << std::put_time(std::localtime(&now), "%F %T") << '|' << message << std::endl;
+    logFile << std::put_time(std::localtime(&now), "%F %T") << '|' << message << std::endl;
 }
 
 std::vector<std::string> Logger::getLines() {
     std::lock_guard<std::mutex> guard (lock_);
-    logFile_.seekg(0);
+    std::fstream logFile (filename_, std::ios::in);
+    if (!logFile.is_open()) {
+        throw std::runtime_error("Cannot open file!");
+    }
+    logFile.seekg(0);
     std::vector<std::string> result;
-    for (std::string line; std::getline(logFile_, line); )
+    for (std::string line; std::getline(logFile, line); )
     {
         result.push_back(line);
     }
@@ -58,6 +68,5 @@ std::vector<std::string> Logger::getLines() {
 
 void Logger::clean() {
     std::lock_guard<std::mutex> guard (lock_);
-    logFile_.close();
-    logFile_.open(filename_, std::ios::out | std::ios::in | std::ios::trunc);
+    std::fstream logFile (filename_, std::ios::out | std::ios::trunc);
 }

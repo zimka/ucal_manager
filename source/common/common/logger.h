@@ -19,5 +19,6 @@ namespace common {
   using LoggerPtr = std::shared_ptr<ILogger>;
 
   LoggerPtr createLogger(std::string filename);
+  LoggerPtr createDefault();
 }
 #endif //UCAL_MANAGER_LOGGER_H

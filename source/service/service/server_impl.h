@@ -6,6 +6,6 @@
 #define UCAL_MANAGER_SERVER_IMPL_H
 
 namespace service {
-    void RunService ();
+    void RunService (std::string const& address_port);
 }
 #endif //UCAL_MANAGER_SERVER_IMPL_H
