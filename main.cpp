@@ -90,7 +90,7 @@ int main_run(){
 }
 
 int main_service() {
-    service::RunService("127.0.0.1:10003");
+    service::RunService("0.0.0.0:10003");
     return 0;
 }
 
