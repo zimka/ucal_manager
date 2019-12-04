@@ -4,7 +4,7 @@
 
 using namespace device;
 
-std::unique_ptr<IDevice> device::acquireDevice() {
+std::unique_ptr<IDevice> device::acquireDevice(std::string name) {
     return std::make_unique<MockDevice>();
 }
 
