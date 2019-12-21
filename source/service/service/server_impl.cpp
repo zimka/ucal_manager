@@ -155,7 +155,7 @@ namespace service {
     ::grpc::Status ServerImpl::SetConfig(::grpc::ServerContext* context, const ::JsonMsg* request, ::OkMsg* response)
     {
         return catcherDecorator([request, this] {
-            json config (request->json());
+            json config = json::parse(request->json());
             machine.setConfig(config);
             return grpc::Status::OK;
         });
