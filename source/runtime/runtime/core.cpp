@@ -85,7 +85,7 @@ void CoreState::setPlan(Plan plan) {
         validatePlan(plan);
     }
     if (worker_thread_.joinable()) {
-        // TODO: maybe better join?
+        // At this point .join had to be executed in correct scenario
         throw common::AssertionError("Thread must be inactive during setPlan");
     }
 
@@ -156,6 +156,7 @@ bool runtime::CoreState::isRunning() {
 
 void CoreState::runNext() {
     // if already running
+    update();
     auto local_block_index = current_block_ind_.load();
     if (local_block_index >= 0) {
         if (!(worker_thread_.joinable())) {
@@ -199,6 +200,11 @@ void CoreState::update() {
         bool status = data_queue_.try_dequeue(frame);
         if (status) {
             storage_.append(std::move(frame));
+        }
+    }
+    if (current_block_ind_ == -1) {
+        if (worker_thread_.joinable()) {
+            worker_thread_.join();
         }
     }
 }
