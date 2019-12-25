@@ -30,7 +30,7 @@ LoggerPtr common::createLogger(std::string filename) {
     return std::make_shared<Logger>(std::move(filename));
 }
 
-LoggerPtr common::createDefault() {
+LoggerPtr common::createDefaultLogger() {
     return std::make_shared<Logger>("errors.txt");
 }
 

@@ -48,7 +48,7 @@ namespace service {
             return grpc::Status(grpc::StatusCode::INTERNAL, err.what());
         } catch (const std::exception& e) {
             std::cout << "FATAL: " << e.what() << std::endl;
-            return grpc::Status(grpc::StatusCode::UNKNOWN, "Something really unexpected happened");
+            return grpc::Status(grpc::StatusCode::INTERNAL, "Something really unexpected happened");
         }
     }
 
@@ -183,7 +183,7 @@ namespace service {
                                        ::LogMsg* response)
     {
         return catcherDecorator([response] {
-            auto logger = common::createLogger("log.txt"); // FIXME: acquire logger from machine;
+            auto logger = common::createDefaultLogger(); // FIXME: acquire logger from machine;
             auto lines = logger->getLines();
             for (auto& line : lines) {
                 response->add_row(std::move(line));
@@ -196,7 +196,7 @@ namespace service {
                                         ::OkMsg* response)
     {
         return catcherDecorator([] {
-            auto logger = common::createLogger("log.txt"); // FIXME: acquire logger from machine;
+            auto logger = common::createDefaultLogger(); // FIXME: acquire logger from machine;
             logger->clean();
             return grpc::Status::OK;
         });
