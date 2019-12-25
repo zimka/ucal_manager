@@ -15,10 +15,9 @@ namespace common {
     virtual std::vector<std::string> getLines() = 0;
     virtual void clean() = 0;
   };
-
   using LoggerPtr = std::shared_ptr<ILogger>;
 
   LoggerPtr createLogger(std::string filename);
-  LoggerPtr createDefault();
+  LoggerPtr createDefaultLogger();
 }
 #endif //UCAL_MANAGER_LOGGER_H

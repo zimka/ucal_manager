@@ -9,7 +9,6 @@
 #include <storage/storage.h>
 
 #include <device/device.h>
-#include <service/server_impl.h>
 
 
 runtime::Plan readPlan(std::string filename) {
@@ -89,15 +88,9 @@ int main_run(){
     return 0;
 }
 
-int main_service() {
-    service::RunService("0.0.0.0:10003");
-    return 0;
-}
-
 int main() {
     try {
-        //main_run();
-        return main_service();
+        main_run();
     }
     catch (common::UcalManagerException& e) {
         std::cout << "Failed with exception:" << e.what()<< std::endl;
