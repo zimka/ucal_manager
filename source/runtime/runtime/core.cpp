@@ -185,6 +185,7 @@ void CoreState::runNext() {
                         // TODO: some sleep?
                         worker.doStep();
                     }
+                    worker.finalize();
                 } catch (common::UcalManagerException& exc) {
                     // TODO: logging
                 }
@@ -212,6 +213,19 @@ void CoreState::update() {
 Worker::Worker(std::atomic<int8_t>* master_block_ind, FrameQueue * queue, Plan plan) : global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {
     device_ = acquireConfiguredDevice();
     worker_block_ind_ = -1;
+}
+
+void Worker::finalize() {
+    // set zero voltage block, run it and stop device,
+    // so the voltage is turned off on device.
+    Block zero_block {
+        1, 1, 1,
+        {0}, {0},
+    };
+    device_->stop();
+    loadBlock(device_, zero_block);
+    device_->run();
+    device_->stop();
 }
 
 void Worker::doStep() {

@@ -49,6 +49,7 @@ namespace runtime {
     public:
         Worker(std::atomic<int8_t>* master_block_ind, FrameQueue* queue, Plan plan);
         void doStep(); 
+        void finalize();
         bool finished();
     private:
         Plan plan_;
