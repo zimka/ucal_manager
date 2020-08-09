@@ -7,12 +7,12 @@ namespace common {
     /*!
     * Key to label signal read from device.
     */
-    BETTER_ENUM(SignalKey, char, Uref, Umod, Utpl, Uhtr, Uaux, Undefined);
+    BETTER_ENUM(SignalKey, char, S0, S1, S2, S3, S4, Undefined);
 
     /*!
     * Key to label signal written to device.
     */
-    BETTER_ENUM(ControlKey, char, Vg, Vm, Undefined);
+    BETTER_ENUM(ControlKey, char, C0, C1, Undefined);
 
     /*!
     * Key to identify AcquisitionDevice

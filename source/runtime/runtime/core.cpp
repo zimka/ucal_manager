@@ -28,8 +28,8 @@ void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
             throw common::DeviceError("Different sizes for voltages");
         }
         device->setProfiles({
-            {common::ControlKey::Vg, block.voltage_0},
-            {common::ControlKey::Vm, block.voltage_1},
+            {common::ControlKey::C0, block.voltage_0},
+            {common::ControlKey::C1, block.voltage_1},
             }, block.write_step_tu * block.voltage_0.size());
     }
     device->prepare();
