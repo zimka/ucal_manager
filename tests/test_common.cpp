@@ -79,14 +79,14 @@ TEST_CASE("TimeStamp") {
 
 TEST_CASE("Keys") {
     SECTION("SignalKey") {
-        std::string source = "Uhtr";
+        std::string source = "S3";
         // NOTE: can't be cast from std::string directly
         SignalKey k1 = SignalKey::_from_string(source.c_str());
-        SignalKey k2 = SignalKey::Uhtr;
-        SignalKey k3 = SignalKey::Umod;
+        SignalKey k2 = SignalKey::S3;
+        SignalKey k3 = SignalKey::S1;
         REQUIRE(k1 == k2);
         //NOTE: must be compared with +Key::Value, not Key::Value
-        REQUIRE(k1 == +SignalKey::Uhtr);
+        REQUIRE(k1 == +SignalKey::S3);
         REQUIRE(k1 != k3);
         REQUIRE(k1._to_string() == source);
         REQUIRE(k1._to_string() == k2._to_string());

@@ -13,9 +13,9 @@ These tests suppose that
 1) DaqboardDevice is compiled (we are on win32)
 2) hardware is available (plugged in and drivers are installed on PC)
 3) hardware controls and signals are shortcut to each other as:
-- Uref to Vm;
-- Umod to Vg;
-- Utpl to ground
+- S0 to C1;
+- S1 to C0;
+- S2 to ground
 */
 
 int main(int argc, char* argv[]) {
@@ -78,8 +78,8 @@ TEST_CASE("Hardware") {
     SECTION("Basic io") {
         DaqboardDevice device;
         device.setProfiles({
-            {common::ControlKey::Vg, { 1000, 1000}},
-            {common::ControlKey::Vm, { 1000, 1000}},
+            {common::ControlKey::C0, { 1000, 1000}},
+            {common::ControlKey::C1, { 1000, 1000}},
             }, second);
         REQUIRE_NOTHROW(device.prepare());
         device.run();
@@ -87,9 +87,9 @@ TEST_CASE("Hardware") {
         storage::Frame frame = device.getData();
         device.stop();
         REQUIRE(frame.size() > 0);
-        REQUIRE(isEqualConstValue(frame[common::SignalKey::Uref], 1000.));
-        REQUIRE(isEqualConstValue(frame[common::SignalKey::Umod], 1000.));
-        REQUIRE(isEqualConstValue(frame[common::SignalKey::Utpl], 0.));
+        REQUIRE(isEqualConstValue(frame[common::SignalKey::S0], 1000.));
+        REQUIRE(isEqualConstValue(frame[common::SignalKey::S1], 1000.));
+        REQUIRE(isEqualConstValue(frame[common::SignalKey::S2], 0.));
     }
     SECTION("Zero when not specified") {
         DaqboardDevice device;
@@ -98,15 +98,15 @@ TEST_CASE("Hardware") {
         testSleep(second);
         storage::Frame frame = device.getData();
         device.stop();
-        REQUIRE(isEqualConstValue(frame[common::SignalKey::Uref], 0.));
-        REQUIRE(isEqualConstValue(frame[common::SignalKey::Umod], 0.));
-        REQUIRE(isEqualConstValue(frame[common::SignalKey::Utpl], 0.));
+        REQUIRE(isEqualConstValue(frame[common::SignalKey::S0], 0.));
+        REQUIRE(isEqualConstValue(frame[common::SignalKey::S1], 0.));
+        REQUIRE(isEqualConstValue(frame[common::SignalKey::S2], 0.));
     }
     SECTION("Zero after destruction") {
         {
             DaqboardDevice device;
             device.setProfiles({
-                {common::ControlKey::Vg, {1000, 1000}}
+                {common::ControlKey::C0, {1000, 1000}}
                 }, second);
             device.prepare();
             device.run();
@@ -120,40 +120,40 @@ TEST_CASE("Hardware") {
             testSleep(second);
             auto frame = device.getData();
             // Check that all signals are zero
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Uref], 0.));
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Umod], 0.));
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Utpl], 0.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S0], 0.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S1], 0.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S2], 0.));
         }
     }
     SECTION("Single channel write") {
         {
             DaqboardDevice device;
             device.setProfiles({
-                {common::ControlKey::Vg, { 1000, 1000 }},
+                {common::ControlKey::C0, { 1000, 1000 }},
                 }, second);
             device.prepare();
             device.run();
             testSleep(second);
             storage::Frame frame = device.getData();
-            INFO("Vg should be shortcuted to Umod, Utpl to the ground");
+            INFO("C0 should be shortcuted to S1, S2 to the ground");
             INFO(frame.repr());
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Umod], 1000.));
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Uref], 0.));
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Utpl], 0.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S1], 1000.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S0], 0.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S2], 0.));
         }
         {
             DaqboardDevice device;
             device.setProfiles({
-                {common::ControlKey::Vm, { 1000, 1000 }},
+                {common::ControlKey::C1, { 1000, 1000 }},
                 }, second); device.prepare();
             device.run();
             testSleep(second);
             storage::Frame frame = device.getData();
-            INFO("Vm should be shortcuted to Uref, Utpl to the ground");
+            INFO("C1 should be shortcuted to S0, S2 to the ground");
             INFO(frame.repr());
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Umod], 0.));
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Uref], 1000.));
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Utpl], 0.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S1], 0.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S0], 1000.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S2], 0.));
         }
     }
     SECTION("Sampling rate setup") {
@@ -195,7 +195,7 @@ TEST_CASE("Hardware") {
         auto duration = ratio * sampling_step;
         device.setReadingSampling(sampling_step);
         device.setProfiles({
-            {common::ControlKey::Vm, {1000, 1000, 1000, 1000}},
+            {common::ControlKey::C1, {1000, 1000, 1000, 1000}},
             }, sampling_step * 4);
         device.setDuration(duration);
         device.prepare();
@@ -209,7 +209,7 @@ TEST_CASE("Hardware") {
         INFO(frame.size());
         REQUIRE(isApproxEqual(frame.size(), ratio, 2));
         INFO(frame.repr());
-        REQUIRE(isEqualConstValue(frame[common::SignalKey::Uref], 1000.));
+        REQUIRE(isEqualConstValue(frame[common::SignalKey::S0], 1000.));
 
     }
     SECTION("Fixed duration two steps") {
@@ -219,7 +219,7 @@ TEST_CASE("Hardware") {
         auto duration = ratio * sampling_step;
         device.setReadingSampling(sampling_step);
         device.setProfiles({
-            {common::ControlKey::Vm, {1000, 1000, 1000, 1000}},
+            {common::ControlKey::C1, {1000, 1000, 1000, 1000}},
             }, sampling_step * 4);
         device.setDuration(duration);
         device.prepare();
@@ -232,7 +232,7 @@ TEST_CASE("Hardware") {
             }
             testSleep(second);
             auto frame = device.getData();
-            REQUIRE(isEqualConstValue(frame[common::SignalKey::Uref], 1000.));
+            REQUIRE(isEqualConstValue(frame[common::SignalKey::S0], 1000.));
             total_size += frame.size();
         }
         REQUIRE(i < 4);

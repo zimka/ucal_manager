@@ -129,8 +129,8 @@ TEST_CASE("Frame") {
     SignalData sd2(values2, len);
     SignalData sd3(values3, len + 1);
 
-    common::SignalKey k1 = common::SignalKey::Uhtr;
-    common::SignalKey k2 = common::SignalKey::Umod;
+    common::SignalKey k1 = common::SignalKey::S3;
+    common::SignalKey k2 = common::SignalKey::S1;
     SECTION("Creation") {
         Frame f1(ts1);
         REQUIRE(f1.getTs() == ts1);
@@ -235,7 +235,7 @@ TEST_CASE("Frame") {
         Frame f1(ts1);
         f1[k1] = sd;
         f1[k2] = sd2;
-        std::string valid_repr = "{\"Timestamp\":[10,10],\"Uhtr\":[1.0,2.0,3.0,4.0,5.0],\"Umod\":[42.0,42.0,42.0,42.0,42.0]}";
+        std::string valid_repr = "{\"S1\":[42.0,42.0,42.0,42.0,42.0],\"S3\":[1.0,2.0,3.0,4.0,5.0],\"Timestamp\":[10,10]}";
         REQUIRE(f1.repr() == valid_repr);
         std::stringstream ss;
         ss << f1;
@@ -246,7 +246,7 @@ TEST_CASE("Frame") {
 }
 
 Frame buildTestFrame(common::TimeStamp ts, int len) {
-    common::SignalKey k1 = common::SignalKey::Uhtr;
+    common::SignalKey k1 = common::SignalKey::S3;
     std::vector<SignalValue> values;
     for (size_t i = 0; i < len; ++i)
         values.push_back(1);

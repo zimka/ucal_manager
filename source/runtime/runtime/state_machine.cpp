@@ -5,6 +5,7 @@
 #include "state_machine.h"
 #include "core.h"
 #include <common/exceptions.h>
+#include <common/logger.h>
 
 #include <sstream>
 //#include <thread>
@@ -23,6 +24,8 @@ StateMachine::StateMachine()
         setState(createState<MachineState::NoPlan>(this));
     }
     catch (const common::DeviceError& err) {
+        auto logger = common::createDefaultLogger();
+        logger->log("Device error at start: " + std::string(err.what()));
         setState(createState<MachineState::Error>(this));
     }
 }

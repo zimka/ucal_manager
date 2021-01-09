@@ -28,8 +28,8 @@ void loadBlock(std::unique_ptr<device::IDevice> const& device, Block block) {
             throw common::DeviceError("Different sizes for voltages");
         }
         device->setProfiles({
-            {common::ControlKey::Vg, block.voltage_0},
-            {common::ControlKey::Vm, block.voltage_1},
+            {common::ControlKey::C0, block.voltage_0},
+            {common::ControlKey::C1, block.voltage_1},
             }, block.write_step_tu * block.voltage_0.size());
     }
     device->prepare();
@@ -85,7 +85,7 @@ void CoreState::setPlan(Plan plan) {
         validatePlan(plan);
     }
     if (worker_thread_.joinable()) {
-        // TODO: maybe better join?
+        // At this point .join had to be executed in correct scenario
         throw common::AssertionError("Thread must be inactive during setPlan");
     }
 
@@ -156,6 +156,7 @@ bool runtime::CoreState::isRunning() {
 
 void CoreState::runNext() {
     // if already running
+    update();
     auto local_block_index = current_block_ind_.load();
     if (local_block_index >= 0) {
         if (!(worker_thread_.joinable())) {
@@ -184,6 +185,7 @@ void CoreState::runNext() {
                         // TODO: some sleep?
                         worker.doStep();
                     }
+                    worker.finalize();
                 } catch (common::UcalManagerException& exc) {
                     // TODO: logging
                 }
@@ -201,11 +203,29 @@ void CoreState::update() {
             storage_.append(std::move(frame));
         }
     }
+    if (current_block_ind_ == -1) {
+        if (worker_thread_.joinable()) {
+            worker_thread_.join();
+        }
+    }
 }
 
 Worker::Worker(std::atomic<int8_t>* master_block_ind, FrameQueue * queue, Plan plan) : global_block_ind_(master_block_ind), queue_(queue), plan_(plan) {
     device_ = acquireConfiguredDevice();
     worker_block_ind_ = -1;
+}
+
+void Worker::finalize() {
+    // set zero voltage block, run it and stop device,
+    // so the voltage is turned off on device.
+    Block zero_block {
+        1, 1, 1,
+        {0}, {0},
+    };
+    device_->stop();
+    loadBlock(device_, zero_block);
+    device_->run();
+    device_->stop();
 }
 
 void Worker::doStep() {

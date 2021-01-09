@@ -158,11 +158,11 @@ TEST_CASE("MockDevice") {
         testSleep(sleep_time);
         storage::Frame f2 = device.getData();
         REQUIRE(common::approxEqual(f2.size(), steps_num));
-        REQUIRE(f2.hasKey(common::SignalKey::Uaux));
-        REQUIRE(f2.hasKey(common::SignalKey::Uhtr));
-        REQUIRE(f2.hasKey(common::SignalKey::Umod));
-        REQUIRE(f2.hasKey(common::SignalKey::Uref));
-        REQUIRE(f2.hasKey(common::SignalKey::Uaux));
+        REQUIRE(f2.hasKey(common::SignalKey::S4));
+        REQUIRE(f2.hasKey(common::SignalKey::S3));
+        REQUIRE(f2.hasKey(common::SignalKey::S1));
+        REQUIRE(f2.hasKey(common::SignalKey::S0));
+        REQUIRE(f2.hasKey(common::SignalKey::S4));
         REQUIRE_FALSE(f2.hasKey(common::SignalKey::Undefined));
     }
 }

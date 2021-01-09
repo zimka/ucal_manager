@@ -35,10 +35,10 @@ DaqboardDevice::~DaqboardDevice() {
 
 void DaqboardDevice::setProfiles(const ProfileSetup& profiles, common::TimeUnit profile_length) {
     checkState({DeviceState::CanSet});
-    auto keys = {common::ControlKey::Vg, common::ControlKey::Vm};
+    auto keys = {common::ControlKey::C0, common::ControlKey::C1};
     if (profiles.size() > 1) {
         // Check that profiles size is the same
-        if (profiles.at(common::ControlKey::Vg).size() != profiles.at(common::ControlKey::Vm).size()) {
+        if (profiles.at(common::ControlKey::C0).size() != profiles.at(common::ControlKey::C1).size()) {
             throw common::DeviceError("All channel profiles must have same size");
         }
     }
@@ -331,11 +331,11 @@ uint32_t device::DaqboardDevice::getSignalChannelId(common::SignalKey key) const
         throw common::AssertionError("'Undefined' SignalKey does not have a channel");
     }
     static const std::map<common::SignalKey, uint8_t> signal_ids = {
-        {common::SignalKey::Uref, 0},
-        {common::SignalKey::Umod, 1},
-        {common::SignalKey::Utpl, 2},
-        {common::SignalKey::Uhtr, 3},
-        {common::SignalKey::Uaux, 4},
+        {common::SignalKey::S0, 0},
+        {common::SignalKey::S1, 1},
+        {common::SignalKey::S2, 2},
+        {common::SignalKey::S3, 3},
+        {common::SignalKey::S4, 4},
     };
     if (signal_ids.size() != DAQBOARD_SIGNALS_NUMBER) {
         throw common::AssertionError("DaqboardDevice SignalKey map is incomplete");
@@ -348,8 +348,8 @@ uint32_t device::DaqboardDevice::getControlChannelId(common::ControlKey key) con
         throw common::AssertionError("'Undefined' ControlKey does not have a channel");
     }
     static const std::map<common::ControlKey, uint32_t> control_ids = {
-        {common::ControlKey::Vg, 0},
-        {common::ControlKey::Vm, 1},
+        {common::ControlKey::C0, 0},
+        {common::ControlKey::C1, 1},
     };
     if (control_ids.size() != DAQBOARD_CONTROLS_NUMBER) {
         throw common::AssertionError("DaqboardDevice ControlKey map is incomplete");
@@ -370,8 +370,8 @@ int16_t device::DaqboardDevice::startDevice() noexcept {
     uint32_t channel1; 
 
     try{
-        channel0 = getControlChannelId(common::ControlKey::Vg);
-        channel1 = getControlChannelId(common::ControlKey::Vm);
+        channel0 = getControlChannelId(common::ControlKey::C0);
+        channel1 = getControlChannelId(common::ControlKey::C1);
     }
     catch (std::runtime_error){
         // to reduce lag between read and write we have to check it here
